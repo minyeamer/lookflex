@@ -50,18 +50,158 @@
 
 ### Enum 정의
 
-```
-Role         : OWNER | ADMIN | EDITOR | VIEWER
-FieldType    : TEXT | NUMBER | DATE | DATETIME | BOOLEAN
-AggregateType: SUM | AVG | MIN | MAX | COUNT | COUNT_DISTINCT | NONE
-ChartType    : TABLE | PIVOT | LINE | BAR | STACKED_BAR | PIE | SCORECARD
-FilterType   : DROPDOWN | TEXT_INPUT | RANGE | DATE_RANGE
-FilterOp     : EQ | NEQ | CONTAINS | NOT_CONTAINS | STARTS_WITH | ENDS_WITH
-             | REGEX | GT | GTE | LT | LTE | BETWEEN | IS_NULL | IS_NOT_NULL
-SortDir      : ASC | DESC
-DSSourceType : POSTGRESQL | MYSQL | MSSQL | BIGQUERY | EXCEL | CSV
-ApprovalStatus: PENDING | APPROVED | REJECTED
-```
+#### Role — 사용자 역할
+
+| 값 | 설명 |
+|---|---|
+| `OWNER` | 시스템 소유자. 전체 관리 권한 (1명 고정) |
+| `ADMIN` | 관리자. 사용자·데이터소스·대시보드 관리 |
+| `EDITOR` | 편집자. 대시보드·차트 생성/수정 |
+| `VIEWER` | 뷰어. 조회 및 개인 뷰 설정만 가능 |
+
+#### ApprovalStatus — 회원가입 요청 상태
+
+| 값 | 설명 |
+|---|---|
+| `PENDING` | 관리자 승인 대기 중 |
+| `APPROVED` | 승인됨 — 사용자 계정 생성 |
+| `REJECTED` | 거절됨 |
+
+#### GroupType — 그룹 유형
+
+| 값 | 설명 |
+|---|---|
+| `DEPARTMENT` | 부서 |
+| `POSITION` | 직급 |
+| `CUSTOM` | 사용자 정의 그룹 |
+
+#### DSSourceType — 데이터 소스 유형
+
+| 값 | 설명 |
+|---|---|
+| `POSTGRESQL` | PostgreSQL 데이터베이스 |
+| `MYSQL` | MySQL 데이터베이스 |
+| `MSSQL` | Microsoft SQL Server |
+| `BIGQUERY` | Google BigQuery |
+| `EXCEL` | Excel 파일 업로드 |
+| `CSV` | CSV 파일 업로드 |
+
+#### FieldType — 데이터 필드 타입
+
+| 값 | 설명 |
+|---|---|
+| `TEXT` | 문자열 |
+| `NUMBER` | 숫자 |
+| `DATE` | 날짜 (YYYY-MM-DD) |
+| `DATETIME` | 날짜+시간 (ISO 8601) |
+| `BOOLEAN` | 참/거짓 |
+
+#### AggregateType — 집계 함수
+
+| 값 | 설명 |
+|---|---|
+| `SUM` | 합계 |
+| `AVG` | 평균 |
+| `MIN` | 최솟값 |
+| `MAX` | 최댓값 |
+| `COUNT` | 건수 |
+| `COUNT_DISTINCT` | 고유 건수 |
+| `NONE` | 집계 없음 (원본 값) |
+
+#### ChartType — 차트 유형
+
+| 값 | 설명 |
+|---|---|
+| `TABLE` | 테이블 (표) |
+| `PIVOT` | 피벗 테이블 |
+| `LINE` | 꺾은선 그래프 |
+| `BAR` | 막대 그래프 |
+| `STACKED_BAR` | 누적 막대 그래프 |
+| `PIE` | 원형 차트 |
+| `SCORECARD` | 스코어카드 (KPI 지표) |
+
+#### FilterType — 필터 UI 유형
+
+| 값 | 설명 |
+|---|---|
+| `DROPDOWN` | 드롭다운 선택 |
+| `TEXT_INPUT` | 텍스트 입력 |
+| `RANGE` | 범위 슬라이더 |
+| `DATE_RANGE` | 날짜 범위 선택 |
+
+#### FilterOp — 필터 연산자
+
+| 값 | 설명 |
+|---|---|
+| `EQ` | 같음 (`=`) |
+| `NEQ` | 같지 않음 (`!=`) |
+| `CONTAINS` | 포함 |
+| `NOT_CONTAINS` | 미포함 |
+| `STARTS_WITH` | ~로 시작 |
+| `ENDS_WITH` | ~로 끝남 |
+| `REGEX` | 정규식 매칭 |
+| `GT` | 초과 (`>`) |
+| `GTE` | 이상 (`>=`) |
+| `LT` | 미만 (`<`) |
+| `LTE` | 이하 (`<=`) |
+| `BETWEEN` | 범위 내 (이상 ~ 이하) |
+| `IS_NULL` | 값 없음 |
+| `IS_NOT_NULL` | 값 있음 |
+
+#### SortDir — 정렬 방향
+
+| 값 | 설명 |
+|---|---|
+| `ASC` | 오름차순 |
+| `DESC` | 내림차순 |
+
+#### CondFormatApplyTo — 조건부 서식 적용 대상
+
+| 값 | 설명 |
+|---|---|
+| `CELL` | 셀 단위 적용 |
+| `ROW` | 행 전체 적용 |
+
+#### NotificationType — 알림 유형
+
+| 값 | 설명 |
+|---|---|
+| `REGISTER_REQUEST` | 새 회원가입 요청 (ADMIN에게 발송) |
+| `REGISTER_APPROVED` | 회원가입 승인 알림 |
+| `REGISTER_REJECTED` | 회원가입 거절 알림 |
+
+#### AuditAction — 감사 로그 액션
+
+| 값 | 설명 |
+|---|---|
+| `LOGIN` | 로그인 |
+| `LOGOUT` | 로그아웃 |
+| `DATA_QUERY` | 데이터 조회 |
+| `EXPORT` | 데이터 내보내기 |
+| `DASHBOARD_EDIT` | 대시보드 수정 |
+| `DATASOURCE_EDIT` | 데이터 소스 수정 |
+| `USER_EDIT` | 사용자 정보 수정 |
+
+### 에러 코드
+
+모든 에러 응답의 `error.code` 필드에 사용되는 코드입니다.
+
+| 코드 | HTTP | 설명 |
+|---|---|---|
+| `EMAIL_ALREADY_EXISTS` | 409 | 이미 가입된 이메일 |
+| `EMAIL_NOT_VERIFIED` | 403 | 이메일 인증 미완료 |
+| `REGISTER_REQUEST_PENDING` | 409 | 동일 이메일로 대기 중인 요청 존재 |
+| `INVALID_CODE` | 400 | 인증 코드 불일치 |
+| `CODE_EXPIRED` | 400 | 인증 코드 만료 |
+| `INVALID_CREDENTIALS` | 401 | 이메일 또는 비밀번호 불일치 |
+| `ACCOUNT_DISABLED` | 403 | 비활성화된 계정 |
+| `INVALID_TOKEN` | 401 | 유효하지 않거나 만료된 토큰 |
+| `USER_NOT_FOUND` | 404 | 사용자를 찾을 수 없음 |
+| `NOT_FOUND` | 404 | 리소스를 찾을 수 없음 |
+| `ALREADY_PROCESSED` | 409 | 이미 처리된 요청 |
+| `UNAUTHORIZED` | 401 | 인증이 필요함 |
+| `FORBIDDEN` | 403 | 권한 없음 |
+| `VALIDATION_ERROR` | 422 | 요청 데이터 유효성 검사 실패 |
 
 ### 페이지네이션 공통 쿼리 파라미터
 
@@ -82,7 +222,7 @@ ApprovalStatus: PENDING | APPROVED | REJECTED
     "total": 120,
     "page": 1,
     "limit": 20,
-    "totalPages": 6
+    "total_pages": 6
   }
 }
 ```
@@ -107,6 +247,10 @@ POST /auth/send-verification
 ```
 
 **Request Body**
+
+| 필드 | 타입 | 필수 | 설명 |
+|---|---|---|---|
+| `email` | string (email) | ✅ | 이메일 주소 |
 
 ```json
 {
@@ -144,6 +288,11 @@ POST /auth/verify-email
 
 **Request Body**
 
+| 필드 | 타입 | 필수 | 설명 |
+|---|---|---|---|
+| `email` | string (email) | ✅ | 이메일 주소 |
+| `code` | string (6자리) | ✅ | OTP 인증 코드 |
+
 ```json
 {
   "email": "user@example.com",
@@ -179,6 +328,10 @@ POST /auth/resend-code
 
 **Request Body**
 
+| 필드 | 타입 | 필수 | 설명 |
+|---|---|---|---|
+| `email` | string (email) | ✅ | 이메일 주소 |
+
 ```json
 {
   "email": "user@example.com"
@@ -196,6 +349,12 @@ POST /auth/resend-code
 }
 ```
 
+**Error Cases**
+
+| 상태 | code | 설명 |
+|---|---|---|
+| 409 | EMAIL_ALREADY_EXISTS | 이미 가입된 이메일 |
+
 ---
 
 ### 1.4. 회원가입 요청
@@ -210,12 +369,19 @@ POST /auth/register
 
 **Request Body**
 
+| 필드 | 타입 | 필수 | 설명 |
+|---|---|---|---|
+| `email` | string (email) | ✅ | 이메일 주소 |
+| `password` | string | ✅ | 비밀번호 (8–100자) |
+| `name` | string | ✅ | 이름 (1–100자) |
+| `requested_role` | Role | - | 희망 역할 (`EDITOR` \| `VIEWER`, 기본값 `VIEWER`) |
+
 ```json
 {
   "email": "user@example.com",
   "password": "P@ssw0rd!",
   "name": "홍길동",
-  "requested_role": "EDITOR"   // EDITOR | VIEWER 만 선택 가능
+  "requested_role": "EDITOR"
 }
 ```
 
@@ -235,6 +401,7 @@ POST /auth/register
 
 | 상태 | code | 설명 |
 |---|---|---|
+| 403 | EMAIL_NOT_VERIFIED | 이메일 인증이 필요합니다 (Redis 인증 완료 키 없음) |
 | 409 | EMAIL_ALREADY_EXISTS | 이미 가입된 이메일 |
 | 409 | REGISTER_REQUEST_PENDING | 동일 이메일로 대기 중인 요청 존재 |
 
@@ -247,6 +414,11 @@ POST /auth/login
 ```
 
 **Request Body**
+
+| 필드 | 타입 | 필수 | 설명 |
+|---|---|---|---|
+| `email` | string (email) | ✅ | 이메일 주소 |
+| `password` | string | ✅ | 비밀번호 |
 
 ```json
 {
@@ -263,9 +435,9 @@ Access Token은 응답 바디에, Refresh Token은 `HttpOnly` 쿠키로 설정�
 {
   "success": true,
   "data": {
-    "accessToken": "eyJ...",
-    "tokenType": "Bearer",
-    "expiresIn": 900
+    "access_token": "eyJ...",
+    "token_type": "Bearer",
+    "expires_in": 900
   }
 }
 ```
@@ -278,8 +450,7 @@ Set-Cookie: `refresh_token=<token>; HttpOnly; SameSite=Strict; Path=/api/v1/auth
 |---|---|---|
 | 401 | INVALID_CREDENTIALS | 이메일 또는 비밀번호 불일치 |
 | 403 | EMAIL_NOT_VERIFIED | 이메일 미인증 |
-| 403 | APPROVAL_PENDING | 관리자 승인 대기 중 |
-| 403 | APPROVAL_REJECTED | 가입 요청 거절됨 |
+| 403 | ACCOUNT_DISABLED | 비활성화된 계정 |
 
 ---
 
@@ -297,9 +468,9 @@ POST /auth/refresh
 {
   "success": true,
   "data": {
-    "accessToken": "eyJ...",
-    "tokenType": "Bearer",
-    "expiresIn": 900
+    "access_token": "eyJ...",
+    "token_type": "Bearer",
+    "expires_in": 900
   }
 }
 ```
@@ -343,16 +514,16 @@ GET /auth/register-requests?status=PENDING&page=1&limit=20
         "id": "uuid",
         "email": "user@example.com",
         "name": "홍길동",
-        "requestedRole": "EDITOR",
+        "requested_role": "EDITOR",
         "status": "PENDING",
-        "emailVerifiedAt": "2026-02-28T09:00:00Z",
-        "createdAt": "2026-02-28T08:55:00Z"
+        "email_verified_at": "2026-02-28T09:00:00Z",
+        "created_at": "2026-02-28T08:55:00Z"
       }
     ],
     "total": 3,
     "page": 1,
     "limit": 20,
-    "totalPages": 1
+    "total_pages": 1
   }
 }
 ```
@@ -364,22 +535,28 @@ GET /auth/register-requests?status=PENDING&page=1&limit=20
 > 권한: ADMIN 이상
 
 ```
-PATCH /auth/register-requests/:requestId
+PATCH /auth/register-requests/:request_id
 ```
 
 **Path Parameters**
 
 | 파라미터 | 타입 | 설명 |
 |---|---|---|
-| `requestId` | UUID | 요청 ID |
+| `request_id` | UUID | 요청 ID |
 
 **Request Body**
 
+| 필드 | 타입 | 필수 | 설명 |
+|---|---|---|---|
+| `status` | ApprovalStatus | ✅ | `APPROVED` \| `REJECTED` |
+| `assigned_role` | Role | 승인 시 필수 | 부여할 역할 (`EDITOR` \| `VIEWER`) |
+| `reject_reason` | string | - | 거절 사유 (선택) |
+
 ```json
 {
-  "status": "APPROVED",       // APPROVED | REJECTED
-  "assignedRole": "EDITOR",   // 승인 시 필수 (EDITOR | VIEWER)
-  "rejectReason": null        // 거절 시 선택
+  "status": "APPROVED",
+  "assigned_role": "EDITOR",
+  "reject_reason": null
 }
 ```
 
@@ -389,10 +566,18 @@ PATCH /auth/register-requests/:requestId
 {
   "success": true,
   "data": {
-    "userId": "uuid",         // 승인 시에만 반환
+    "user_id": "uuid",         // 승인 시에만 반환
     "status": "APPROVED"
   }
 }
+```
+
+**Error Cases**
+
+| 상태 | code | 설명 |
+|---|---|---|
+| 404 | NOT_FOUND | 요청을 찾을 수 없음 |
+| 409 | ALREADY_PROCESSED | 이미 처리된 요청 |
 ```
 
 ---
@@ -432,10 +617,15 @@ POST /auth/password-reset
 
 **Request Body**
 
+| 필드 | 타입 | 필수 | 설명 |
+|---|---|---|---|
+| `token` | string | ✅ | 이메일로 전송된 재설정 토큰 |
+| `new_password` | string | ✅ | 새 비밀번호 (8–100자) |
+
 ```json
 {
   "token": "reset-token-from-email",
-  "newPassword": "NewP@ssw0rd!"
+  "new_password": "NewP@ssw0rd!"
 }
 ```
 
@@ -448,6 +638,14 @@ POST /auth/password-reset
     "message": "비밀번호가 변경되었습니다."
   }
 }
+```
+
+**Error Cases**
+
+| 상태 | code | 설명 |
+|---|---|---|
+| 400 | INVALID_TOKEN | 유효하지 않거나 만료된 토큰 |
+| 404 | USER_NOT_FOUND | 사용자를 찾을 수 없음 |
 ```
 
 ---
@@ -469,13 +667,13 @@ GET /users/me
     "id": "uuid",
     "email": "user@example.com",
     "name": "홍길동",
-    "profileImageUrl": "https://...",
+    "profile_image_url": "https://...",
     "role": "EDITOR",
     "groups": [
       { "id": "uuid", "name": "마케팅팀", "type": "DEPARTMENT" },
       { "id": "uuid", "name": "대리", "type": "POSITION" }
     ],
-    "joinedAt": "2026-02-28T09:00:00Z"
+    "joined_at": "2026-02-28T09:00:00Z"
   }
 }
 ```
@@ -493,7 +691,7 @@ PATCH /users/me
 ```json
 {
   "name": "홍길동",
-  "profileImageUrl": "https://..."
+  "profile_image_url": "https://..."
 }
 ```
 
@@ -520,7 +718,7 @@ Content-Type: multipart/form-data
 {
   "success": true,
   "data": {
-    "profileImageUrl": "https://..."
+    "profile_image_url": "https://..."
   }
 }
 ```
@@ -537,8 +735,8 @@ PATCH /users/me/password
 
 ```json
 {
-  "currentPassword": "P@ssw0rd!",
-  "newPassword": "NewP@ssw0rd!"
+  "current_password": "P@ssw0rd!",
+  "new_password": "NewP@ssw0rd!"
 }
 ```
 
@@ -558,7 +756,7 @@ PATCH /users/me/password
 > 권한: ADMIN 이상
 
 ```
-GET /users?search=홍길동&role=EDITOR&groupId=uuid&page=1&limit=20
+GET /users?search=홍길동&role=EDITOR&group_id=uuid&page=1&limit=20
 ```
 
 **Query Parameters**
@@ -567,7 +765,7 @@ GET /users?search=홍길동&role=EDITOR&groupId=uuid&page=1&limit=20
 |---|---|---|
 | `search` | string | 이름 또는 이메일 검색 |
 | `role` | Role | 역할 필터 |
-| `groupId` | UUID | 그룹 필터 |
+| `group_id` | UUID | 그룹 필터 |
 
 **Response `200`**
 
@@ -580,16 +778,16 @@ GET /users?search=홍길동&role=EDITOR&groupId=uuid&page=1&limit=20
         "id": "uuid",
         "email": "user@example.com",
         "name": "홍길동",
-        "profileImageUrl": null,
+        "profile_image_url": null,
         "role": "EDITOR",
         "groups": [ { "id": "uuid", "name": "마케팅팀", "type": "DEPARTMENT" } ],
-        "joinedAt": "2026-02-28T09:00:00Z"
+        "joined_at": "2026-02-28T09:00:00Z"
       }
     ],
     "total": 45,
     "page": 1,
     "limit": 20,
-    "totalPages": 3
+    "total_pages": 3
   }
 }
 ```
@@ -601,7 +799,7 @@ GET /users?search=홍길동&role=EDITOR&groupId=uuid&page=1&limit=20
 > 권한: ADMIN 이상
 
 ```
-GET /users/:userId
+GET /users/:user_id
 ```
 
 **Response `200`** — 2.1 응답과 동일 구조
@@ -621,8 +819,8 @@ PATCH /users/roles
 ```json
 {
   "updates": [
-    { "userId": "uuid", "role": "VIEWER" },
-    { "userId": "uuid", "role": "EDITOR" }
+    { "user_id": "uuid", "role": "VIEWER" },
+    { "user_id": "uuid", "role": "EDITOR" }
   ]
 }
 ```
@@ -633,7 +831,7 @@ PATCH /users/roles
 {
   "success": true,
   "data": {
-    "updatedCount": 2
+    "updated_count": 2
   }
 }
 ```
@@ -654,9 +852,9 @@ PATCH /users/profiles
 {
   "updates": [
     {
-      "userId": "uuid",
+      "user_id": "uuid",
       "name": "홍길동",
-      "groupIds": ["uuid-dept", "uuid-position"]
+      "group_ids": ["uuid-dept", "uuid-position"]
     }
   ]
 }
@@ -668,7 +866,7 @@ PATCH /users/profiles
 {
   "success": true,
   "data": {
-    "updatedCount": 1
+    "updated_count": 1
   }
 }
 ```
@@ -680,7 +878,7 @@ PATCH /users/profiles
 > 권한: ADMIN 이상 (OWNER는 비활성화 불가)
 
 ```
-DELETE /users/:userId
+DELETE /users/:user_id
 ```
 
 **Response `204`**
@@ -720,8 +918,8 @@ POST /groups
     "name": "마케팅팀",
     "type": "DEPARTMENT",
     "description": "마케팅 부서",
-    "memberCount": 0,
-    "createdAt": "2026-02-28T09:00:00Z"
+    "member_count": 0,
+    "created_at": "2026-02-28T09:00:00Z"
   }
 }
 ```
@@ -747,7 +945,7 @@ GET /groups?type=DEPARTMENT
   "success": true,
   "data": {
     "items": [
-      { "id": "uuid", "name": "마케팅팀", "type": "DEPARTMENT", "memberCount": 12 }
+      { "id": "uuid", "name": "마케팅팀", "type": "DEPARTMENT", "member_count": 12 }
     ],
     "total": 5
   }
@@ -761,7 +959,7 @@ GET /groups?type=DEPARTMENT
 > 권한: ADMIN 이상
 
 ```
-PATCH /groups/:groupId
+PATCH /groups/:group_id
 ```
 
 **Request Body**
@@ -782,7 +980,7 @@ PATCH /groups/:groupId
 > 권한: ADMIN 이상
 
 ```
-DELETE /groups/:groupId
+DELETE /groups/:group_id
 ```
 
 **Response `204`**
@@ -809,7 +1007,7 @@ POST /dashboards
 {
   "name": "매출 현황 대시보드",
   "description": "브랜드별 일별 매출 요약",
-  "isPublic": false
+  "is_public": false
 }
 ```
 
@@ -822,12 +1020,12 @@ POST /dashboards
     "id": "uuid",
     "name": "매출 현황 대시보드",
     "description": "브랜드별 일별 매출 요약",
-    "isPublic": false,
-    "ownerId": "uuid",
-    "ownerName": "홍길동",
-    "pageCount": 0,
-    "createdAt": "2026-02-28T09:00:00Z",
-    "updatedAt": "2026-02-28T09:00:00Z"
+    "is_public": false,
+    "owner_id": "uuid",
+    "owner_name": "홍길동",
+    "page_count": 0,
+    "created_at": "2026-02-28T09:00:00Z",
+    "updated_at": "2026-02-28T09:00:00Z"
   }
 }
 ```
@@ -837,7 +1035,7 @@ POST /dashboards
 ### 4.2. 대시보드 목록 조회
 
 ```
-GET /dashboards?search=매출&ownerId=uuid&isFavorite=false&page=1&limit=20
+GET /dashboards?search=매출&owner_id=uuid&is_favorite=false&page=1&limit=20
 ```
 
 **Query Parameters**
@@ -845,8 +1043,8 @@ GET /dashboards?search=매출&ownerId=uuid&isFavorite=false&page=1&limit=20
 | 파라미터 | 타입 | 설명 |
 |---|---|---|
 | `search` | string | 이름 검색 |
-| `ownerId` | UUID | 작성자 필터 |
-| `isFavorite` | boolean | 즐겨찾기 필터 |
+| `owner_id` | UUID | 작성자 필터 |
+| `is_favorite` | boolean | 즐겨찾기 필터 |
 
 **Response `200`**
 
@@ -859,20 +1057,20 @@ GET /dashboards?search=매출&ownerId=uuid&isFavorite=false&page=1&limit=20
         "id": "uuid",
         "name": "매출 현황 대시보드",
         "description": "...",
-        "isPublic": false,
-        "ownerId": "uuid",
-        "ownerName": "홍길동",
-        "isFavorite": false,
-        "pageCount": 3,
-        "thumbnailUrl": null,
-        "createdAt": "2026-02-28T09:00:00Z",
-        "updatedAt": "2026-02-28T09:00:00Z"
+        "is_public": false,
+        "owner_id": "uuid",
+        "owner_name": "홍길동",
+        "is_favorite": false,
+        "page_count": 3,
+        "thumbnail_url": null,
+        "created_at": "2026-02-28T09:00:00Z",
+        "updated_at": "2026-02-28T09:00:00Z"
       }
     ],
     "total": 12,
     "page": 1,
     "limit": 20,
-    "totalPages": 1
+    "total_pages": 1
   }
 }
 ```
@@ -882,7 +1080,7 @@ GET /dashboards?search=매출&ownerId=uuid&isFavorite=false&page=1&limit=20
 ### 4.3. 대시보드 단건 조회 (페이지 목록 포함)
 
 ```
-GET /dashboards/:dashboardId
+GET /dashboards/:dashboard_id
 ```
 
 **Response `200`**
@@ -894,10 +1092,10 @@ GET /dashboards/:dashboardId
     "id": "uuid",
     "name": "매출 현황 대시보드",
     "description": "...",
-    "isPublic": false,
-    "ownerId": "uuid",
-    "ownerName": "홍길동",
-    "isFavorite": false,
+    "is_public": false,
+    "owner_id": "uuid",
+    "owner_name": "홍길동",
+    "is_favorite": false,
     "pages": [
       {
         "id": "uuid",
@@ -905,11 +1103,11 @@ GET /dashboards/:dashboardId
         "order": 1,
         "width": 1920,
         "height": 1080,
-        "thumbnailUrl": null
+        "thumbnail_url": null
       }
     ],
-    "createdAt": "2026-02-28T09:00:00Z",
-    "updatedAt": "2026-02-28T09:00:00Z"
+    "created_at": "2026-02-28T09:00:00Z",
+    "updated_at": "2026-02-28T09:00:00Z"
   }
 }
 ```
@@ -921,7 +1119,7 @@ GET /dashboards/:dashboardId
 > 권한: 소유자 또는 ADMIN 이상
 
 ```
-PATCH /dashboards/:dashboardId
+PATCH /dashboards/:dashboard_id
 ```
 
 **Request Body** (모든 필드 선택적)
@@ -930,7 +1128,7 @@ PATCH /dashboards/:dashboardId
 {
   "name": "매출 현황 대시보드 v2",
   "description": "수정된 설명",
-  "isPublic": true
+  "is_public": true
 }
 ```
 
@@ -943,7 +1141,7 @@ PATCH /dashboards/:dashboardId
 > 권한: 소유자 또는 ADMIN 이상
 
 ```
-DELETE /dashboards/:dashboardId
+DELETE /dashboards/:dashboard_id
 ```
 
 **Response `204`**
@@ -953,7 +1151,7 @@ DELETE /dashboards/:dashboardId
 ### 4.6. 대시보드 즐겨찾기 토글
 
 ```
-POST /dashboards/:dashboardId/favorite
+POST /dashboards/:dashboard_id/favorite
 ```
 
 **Response `200`**
@@ -962,7 +1160,7 @@ POST /dashboards/:dashboardId/favorite
 {
   "success": true,
   "data": {
-    "isFavorite": true
+    "is_favorite": true
   }
 }
 ```
@@ -974,7 +1172,7 @@ POST /dashboards/:dashboardId/favorite
 > 권한: EDITOR 이상
 
 ```
-POST /dashboards/:dashboardId/pages
+POST /dashboards/:dashboard_id/pages
 ```
 
 **Request Body**
@@ -985,7 +1183,7 @@ POST /dashboards/:dashboardId/pages
   "width": 1920,
   "height": 1080,
   "order": 2,
-  "backgroundColor": "#ffffff"
+  "background_color": "#ffffff"
 }
 ```
 
@@ -996,15 +1194,15 @@ POST /dashboards/:dashboardId/pages
   "success": true,
   "data": {
     "id": "uuid",
-    "dashboardId": "uuid",
+    "dashboard_id": "uuid",
     "name": "브랜드별 상세",
     "width": 1920,
     "height": 1080,
     "order": 2,
-    "backgroundColor": "#ffffff",
-    "ownerId": "uuid",
-    "createdAt": "2026-02-28T09:00:00Z",
-    "updatedAt": "2026-02-28T09:00:00Z"
+    "background_color": "#ffffff",
+    "owner_id": "uuid",
+    "created_at": "2026-02-28T09:00:00Z",
+    "updated_at": "2026-02-28T09:00:00Z"
   }
 }
 ```
@@ -1014,7 +1212,7 @@ POST /dashboards/:dashboardId/pages
 ### 4.8. 페이지 상세 조회 (위젯 포함)
 
 ```
-GET /dashboards/:dashboardId/pages/:pageId
+GET /dashboards/:dashboard_id/pages/:page_id
 ```
 
 **Response `200`**
@@ -1024,12 +1222,12 @@ GET /dashboards/:dashboardId/pages/:pageId
   "success": true,
   "data": {
     "id": "uuid",
-    "dashboardId": "uuid",
+    "dashboard_id": "uuid",
     "name": "매출 요약",
     "width": 1920,
     "height": 1080,
     "order": 1,
-    "backgroundColor": "#f8f9fa",
+    "background_color": "#f8f9fa",
     "charts": [
       {
         "id": "uuid",
@@ -1052,8 +1250,8 @@ GET /dashboards/:dashboardId/pages/:pageId
         "height": 40
       }
     ],
-    "createdAt": "2026-02-28T09:00:00Z",
-    "updatedAt": "2026-02-28T09:00:00Z"
+    "created_at": "2026-02-28T09:00:00Z",
+    "updated_at": "2026-02-28T09:00:00Z"
   }
 }
 ```
@@ -1065,7 +1263,7 @@ GET /dashboards/:dashboardId/pages/:pageId
 > 권한: 소유자 또는 ADMIN 이상
 
 ```
-PATCH /dashboards/:dashboardId/pages/:pageId
+PATCH /dashboards/:dashboard_id/pages/:page_id
 ```
 
 **Request Body** (모든 필드 선택적)
@@ -1075,7 +1273,7 @@ PATCH /dashboards/:dashboardId/pages/:pageId
   "name": "수정된 페이지명",
   "width": 1920,
   "height": 1200,
-  "backgroundColor": "#f0f0f0"
+  "background_color": "#f0f0f0"
 }
 ```
 
@@ -1088,7 +1286,7 @@ PATCH /dashboards/:dashboardId/pages/:pageId
 > 권한: 소유자 또는 ADMIN 이상
 
 ```
-PATCH /dashboards/:dashboardId/pages/reorder
+PATCH /dashboards/:dashboard_id/pages/reorder
 ```
 
 **Request Body**
@@ -1096,8 +1294,8 @@ PATCH /dashboards/:dashboardId/pages/reorder
 ```json
 {
   "orders": [
-    { "pageId": "uuid", "order": 1 },
-    { "pageId": "uuid", "order": 2 }
+    { "page_id": "uuid", "order": 1 },
+    { "page_id": "uuid", "order": 2 }
   ]
 }
 ```
@@ -1118,7 +1316,7 @@ PATCH /dashboards/:dashboardId/pages/reorder
 > 권한: 소유자 또는 ADMIN 이상
 
 ```
-DELETE /dashboards/:dashboardId/pages/:pageId
+DELETE /dashboards/:dashboard_id/pages/:page_id
 ```
 
 **Response `204`**
@@ -1130,7 +1328,7 @@ DELETE /dashboards/:dashboardId/pages/:pageId
 > 권한: EDITOR 이상
 
 ```
-POST /dashboards/:dashboardId/pages/:pageId/duplicate
+POST /dashboards/:dashboard_id/pages/:page_id/duplicate
 ```
 
 **Request Body** (선택적)
@@ -1138,7 +1336,8 @@ POST /dashboards/:dashboardId/pages/:pageId/duplicate
 ```json
 {
   "name": "매출 요약 (복사본)",
-  "targetDashboardId": "uuid"  // 다른 대시보드로 복제 시 지정
+  "target_dashboard_id": "uuid"
+}  // 다른 대시보드로 복제 시 지정
 }
 ```
 
@@ -1149,7 +1348,7 @@ POST /dashboards/:dashboardId/pages/:pageId/duplicate
 ### 4.13. 즐겨찾는 페이지 토글
 
 ```
-POST /dashboards/:dashboardId/pages/:pageId/favorite
+POST /dashboards/:dashboard_id/pages/:page_id/favorite
 ```
 
 **Response `200`**
@@ -1157,7 +1356,7 @@ POST /dashboards/:dashboardId/pages/:pageId/favorite
 ```json
 {
   "success": true,
-  "data": { "isFavorite": true }
+  "data": { "is_favorite": true }
 }
 ```
 
@@ -1178,10 +1377,10 @@ POST /datasources
 ```json
 {
   "label": "메인 주문 DB",
-  "sourceId": "order_db",         // 영문, 언더스코어. 필드 접근 시 prefix로 사용
-  "sourceType": "POSTGRESQL",
+  "source_id": "order_db",
+  "source_type": "POSTGRESQL",
   "description": "일별 주문/결제 적재 DB",
-  "connectionConfig": {
+  "connection_config": {
     "host": "localhost",
     "port": 5432,
     "database": "sales",
@@ -1202,11 +1401,11 @@ POST /datasources
   "data": {
     "id": "uuid",
     "label": "메인 주문 DB",
-    "sourceId": "order_db",
-    "sourceType": "POSTGRESQL",
+    "source_id": "order_db",
+    "source_type": "POSTGRESQL",
     "description": "일별 주문/결제 적재 DB",
-    "fieldCount": 0,
-    "createdAt": "2026-02-28T09:00:00Z"
+    "field_count": 0,
+    "created_at": "2026-02-28T09:00:00Z"
   }
 }
 ```
@@ -1228,10 +1427,10 @@ Content-Type: multipart/form-data
 |---|---|---|
 | `file` | File | xlsx / csv 파일 (최대 50MB) |
 | `label` | string | 데이터 소스 이름 |
-| `sourceId` | string | 영문 ID |
+| `source_id` | string | 영문 ID |
 | `description` | string | (선택) |
-| `headerRow` | integer | 헤더 행 번호 (기본값: 1) |
-| `sheetName` | string | xlsx 시트명 (기본값: 첫 번째 시트) |
+| `header_row` | integer | 헤더 행 번호 (기본값: 1) |
+| `sheet_name` | string | xlsx 시트명 (기본값: 첫 번째 시트) |
 
 **Response `201`** — 5.1 응답과 동일 구조
 
@@ -1247,7 +1446,7 @@ Content-Type: multipart/form-data
 POST /datasources/test-connection
 ```
 
-**Request Body** — 5.1의 `connectionConfig`와 동일
+**Request Body** — 5.1의 `connection_config`와 동일
 
 **Response `200`**
 
@@ -1257,7 +1456,7 @@ POST /datasources/test-connection
   "data": {
     "connected": true,
     "message": "연결 성공",
-    "sampleColumns": ["date", "brand", "settlement_amount"]
+    "sample_columns": ["date", "brand", "settlement_amount"]
   }
 }
 ```
@@ -1267,15 +1466,15 @@ POST /datasources/test-connection
 ### 5.4. 데이터 소스 목록 조회
 
 ```
-GET /datasources?sourceType=POSTGRESQL&search=주문
+GET /datasources?source_type=POSTGRESQL&search=주문
 ```
 
 **Query Parameters**
 
 | 파라미터 | 타입 | 설명 |
 |---|---|---|
-| `sourceType` | DSSourceType | 유형 필터 |
-| `search` | string | label 또는 sourceId 검색 |
+| `source_type` | DSSourceType | 유형 필터 |
+| `search` | string | label 또는 source_id 검색 |
 
 **Response `200`**
 
@@ -1287,12 +1486,12 @@ GET /datasources?sourceType=POSTGRESQL&search=주문
       {
         "id": "uuid",
         "label": "메인 주문 DB",
-        "sourceId": "order_db",
-        "sourceType": "POSTGRESQL",
+        "source_id": "order_db",
+        "source_type": "POSTGRESQL",
         "description": "...",
-        "fieldCount": 24,
-        "hasAccess": true,
-        "createdAt": "2026-02-28T09:00:00Z"
+        "field_count": 24,
+        "has_access": true,
+        "created_at": "2026-02-28T09:00:00Z"
       }
     ],
     "total": 5
@@ -1305,7 +1504,7 @@ GET /datasources?sourceType=POSTGRESQL&search=주문
 ### 5.5. 데이터 소스 필드 목록 조회
 
 ```
-GET /datasources/:datasourceId/fields
+GET /datasources/:datasource_id/fields
 ```
 
 **Response `200`**
@@ -1314,20 +1513,20 @@ GET /datasources/:datasourceId/fields
 {
   "success": true,
   "data": {
-    "datasourceId": "uuid",
-    "sourceId": "order_db",
+    "datasource_id": "uuid",
+    "source_id": "order_db",
     "label": "메인 주문 DB",
     "fields": [
       {
         "id": "uuid",
-        "fieldId": "settlement_amount",
+        "field_id": "settlement_amount",
         "label": "결제금액",
         "type": "NUMBER",
-        "defaultAggregate": "SUM",
+        "default_aggregate": "SUM",
         "description": "정산금액 기준 결제금액",
-        "numberFormat": "#,##0",
+        "number_format": "#,##0",
         "order": 1,
-        "isHidden": false
+        "is_hidden": false
       }
     ]
   }
@@ -1341,7 +1540,7 @@ GET /datasources/:datasourceId/fields
 > 권한: ADMIN 이상
 
 ```
-PATCH /datasources/:datasourceId/fields
+PATCH /datasources/:datasource_id/fields
 ```
 
 **Request Body**
@@ -1350,14 +1549,14 @@ PATCH /datasources/:datasourceId/fields
 {
   "updates": [
     {
-      "fieldId": "settlement_amount",
+      "field_id": "settlement_amount",
       "label": "결제금액",
       "type": "NUMBER",
-      "defaultAggregate": "SUM",
+      "default_aggregate": "SUM",
       "description": "정산금액 기준",
-      "numberFormat": "#,##0",
+      "number_format": "#,##0",
       "order": 1,
-      "isHidden": false
+      "is_hidden": false
     }
   ]
 }
@@ -1368,7 +1567,7 @@ PATCH /datasources/:datasourceId/fields
 ```json
 {
   "success": true,
-  "data": { "updatedCount": 1 }
+  "data": { "updated_count": 1 }
 }
 ```
 
@@ -1379,7 +1578,7 @@ PATCH /datasources/:datasourceId/fields
 > 권한: ADMIN 이상
 
 ```
-PATCH /datasources/:datasourceId
+PATCH /datasources/:datasource_id
 ```
 
 **Request Body** (모든 필드 선택적)
@@ -1388,7 +1587,7 @@ PATCH /datasources/:datasourceId
 {
   "label": "수정된 이름",
   "description": "수정된 설명",
-  "connectionConfig": { ... }
+  "connection_config": { ... }
 }
 ```
 
@@ -1401,7 +1600,7 @@ PATCH /datasources/:datasourceId
 > 권한: ADMIN 이상
 
 ```
-DELETE /datasources/:datasourceId
+DELETE /datasources/:datasource_id
 ```
 
 **Response `204`**
@@ -1413,19 +1612,19 @@ DELETE /datasources/:datasourceId
 > 권한: ADMIN 이상
 
 ```
-PUT /datasources/:datasourceId/permissions
+PUT /datasources/:datasource_id/permissions
 ```
 
 **Request Body**
 
 지정하지 않은 대상은 기본적으로 접근 불가입니다.
-`allowAll: true`로 전체 허용 가능합니다.
+`allow_all: true`로 전체 허용 가능합니다.
 
 ```json
 {
-  "allowAll": false,
-  "groupIds": ["uuid1", "uuid2"],
-  "userIds": ["uuid3"]
+  "allow_all": false,
+  "group_ids": ["uuid1", "uuid2"],
+  "user_ids": ["uuid3"]
 }
 ```
 
@@ -1435,9 +1634,9 @@ PUT /datasources/:datasourceId/permissions
 {
   "success": true,
   "data": {
-    "allowAll": false,
-    "groupIds": ["uuid1", "uuid2"],
-    "userIds": ["uuid3"]
+    "allow_all": false,
+    "group_ids": ["uuid1", "uuid2"],
+    "user_ids": ["uuid3"]
   }
 }
 ```
@@ -1449,7 +1648,7 @@ PUT /datasources/:datasourceId/permissions
 > 권한: ADMIN 이상
 
 ```
-GET /datasources/:datasourceId/permissions
+GET /datasources/:datasource_id/permissions
 ```
 
 **Response `200`** — 5.9 응답과 동일 구조
@@ -1459,7 +1658,7 @@ GET /datasources/:datasourceId/permissions
 ### 5.11. 데이터 소스 연관 대시보드/페이지 목록 조회
 
 ```
-GET /datasources/:datasourceId/references
+GET /datasources/:datasource_id/references
 ```
 
 **Response `200`**
@@ -1472,7 +1671,7 @@ GET /datasources/:datasourceId/references
       { "id": "uuid", "name": "매출 현황 대시보드" }
     ],
     "pages": [
-      { "id": "uuid", "name": "브랜드별 상세", "dashboardId": "uuid", "dashboardName": "매출 현황 대시보드" }
+      { "id": "uuid", "name": "브랜드별 상세", "dashboard_id": "uuid", "dashboard_name": "매출 현황 대시보드" }
     ]
   }
 }
@@ -1487,7 +1686,7 @@ GET /datasources/:datasourceId/references
 > 권한: ADMIN 이상
 
 ```
-POST /datasources/:datasourceId/sync
+POST /datasources/:datasource_id/sync
 ```
 
 **Response `200`**
@@ -1496,8 +1695,8 @@ POST /datasources/:datasourceId/sync
 {
   "success": true,
   "data": {
-    "addedFields": ["new_column"],
-    "removedFields": ["old_column"],
+    "added_fields": ["new_column"],
+    "removed_fields": ["old_column"],
     "message": "스키마 동기화 완료"
   }
 }
@@ -1508,7 +1707,7 @@ POST /datasources/:datasourceId/sync
 ### 5.13. 데이터 소스 미리보기
 
 ```
-GET /datasources/:datasourceId/preview?limit=10
+GET /datasources/:datasource_id/preview?limit=10
 ```
 
 **Query Parameters**
@@ -1527,7 +1726,7 @@ GET /datasources/:datasourceId/preview?limit=10
     "rows": [
       ["2026-02-02", "닥터트루", 13681410]
     ],
-    "totalRows": 1234
+    "total_rows": 1234
   }
 }
 ```
@@ -1541,7 +1740,7 @@ GET /datasources/:datasourceId/preview?limit=10
 > 권한: EDITOR 이상 (해당 페이지 소유자 또는 ADMIN)
 
 ```
-POST /dashboards/:dashboardId/pages/:pageId/charts
+POST /dashboards/:dashboard_id/pages/:page_id/charts
 ```
 
 **Request Body**
@@ -1554,23 +1753,23 @@ POST /dashboards/:dashboardId/pages/:pageId/charts
   "y": 0,
   "width": 800,
   "height": 400,
-  "datasourceId": "uuid",
+  "datasource_id": "uuid",
   "config": {
     "dimensions": [
-      { "fieldId": "brand", "label": "브랜드", "order": 1 }
+      { "field_id": "brand", "label": "브랜드", "order": 1 }
     ],
     "metrics": [
       {
-        "fieldId": "settlement_amount",
+        "field_id": "settlement_amount",
         "label": "결제금액",
         "aggregate": "SUM",
-        "numberFormat": "#,##0",
+        "number_format": "#,##0",
         "order": 1
       }
     ],
-    "defaultSort": { "fieldId": "settlement_amount", "direction": "DESC" },
-    "rowsPerPage": 20,
-    "showTotalsRow": true
+    "default_sort": { "field_id": "settlement_amount", "direction": "DESC" },
+    "rows_per_page": 20,
+    "show_totals_row": true
   }
 }
 ```
@@ -1582,17 +1781,17 @@ POST /dashboards/:dashboardId/pages/:pageId/charts
   "success": true,
   "data": {
     "id": "uuid",
-    "pageId": "uuid",
+    "page_id": "uuid",
     "type": "TABLE",
     "title": "쇼핑몰별 결제금액",
     "x": 0,
     "y": 0,
     "width": 800,
     "height": 400,
-    "datasourceId": "uuid",
+    "datasource_id": "uuid",
     "config": { ... },
     "style": { ... },
-    "createdAt": "2026-02-28T09:00:00Z"
+    "created_at": "2026-02-28T09:00:00Z"
   }
 }
 ```
@@ -1601,19 +1800,19 @@ POST /dashboards/:dashboardId/pages/:pageId/charts
 
 | 타입 | 주요 config 필드 |
 |---|---|
-| TABLE | dimensions, metrics, defaultSort, rowsPerPage, showTotalsRow, frozenColumns |
-| PIVOT | rowDimension, colDimension, metrics, showSubtotals |
-| LINE / BAR | xAxis (dimension), yAxis (metrics), legend, smooth |
-| STACKED_BAR | xAxis, series (dimension), metrics |
+| TABLE | dimensions, metrics, default_sort, rows_per_page, show_totals_row, frozen_columns |
+| PIVOT | row_dimension, col_dimension, metrics, show_subtotals |
+| LINE / BAR | x_axis (dimension), y_axis (metrics), legend, smooth |
+| STACKED_BAR | x_axis, series (dimension), metrics |
 | PIE | dimension, metric |
-| SCORECARD | metric, comparisonMetric, comparisonLabel |
+| SCORECARD | metric, comparison_metric, comparison_label |
 
 ---
 
 ### 6.2. 차트 단건 조회
 
 ```
-GET /dashboards/:dashboardId/pages/:pageId/charts/:chartId
+GET /dashboards/:dashboard_id/pages/:page_id/charts/:chart_id
 ```
 
 **Response `200`** — 6.1 응답과 동일 구조
@@ -1625,7 +1824,7 @@ GET /dashboards/:dashboardId/pages/:pageId/charts/:chartId
 > 권한: 소유자 또는 ADMIN 이상
 
 ```
-PATCH /dashboards/:dashboardId/pages/:pageId/charts/:chartId
+PATCH /dashboards/:dashboard_id/pages/:page_id/charts/:chart_id
 ```
 
 **Request Body** (모든 필드 선택적)
@@ -1650,7 +1849,7 @@ PATCH /dashboards/:dashboardId/pages/:pageId/charts/:chartId
 > 권한: 소유자 또는 ADMIN 이상
 
 ```
-PATCH /dashboards/:dashboardId/pages/:pageId/charts/:chartId/style
+PATCH /dashboards/:dashboard_id/pages/:page_id/charts/:chart_id/style
 ```
 
 **Request Body**
@@ -1658,23 +1857,23 @@ PATCH /dashboards/:dashboardId/pages/:pageId/charts/:chartId/style
 ```json
 {
   "header": {
-    "fontSize": 13,
-    "fontWeight": "bold",
-    "backgroundColor": "#f1f5f9",
-    "textColor": "#1e293b",
-    "wrapText": false
+    "font_size": 13,
+    "font_weight": "bold",
+    "background_color": "#f1f5f9",
+    "text_color": "#1e293b",
+    "wrap_text": false
   },
   "body": {
-    "fontSize": 13,
-    "alternateRowColor": "#f8fafc",
-    "borderColor": "#e2e8f0"
+    "font_size": 13,
+    "alternate_row_color": "#f8fafc",
+    "border_color": "#e2e8f0"
   },
-  "totalsRow": {
-    "backgroundColor": "#e2e8f0",
-    "fontWeight": "bold"
+  "totals_row": {
+    "background_color": "#e2e8f0",
+    "font_weight": "bold"
   },
-  "showBorder": true,
-  "borderRadius": 4,
+  "show_border": true,
+  "border_radius": 4,
   "padding": { "top": 8, "right": 12, "bottom": 8, "left": 12 }
 }
 ```
@@ -1695,7 +1894,7 @@ PATCH /dashboards/:dashboardId/pages/:pageId/charts/:chartId/style
 > 권한: 소유자 또는 ADMIN 이상
 
 ```
-DELETE /dashboards/:dashboardId/pages/:pageId/charts/:chartId
+DELETE /dashboards/:dashboard_id/pages/:page_id/charts/:chart_id
 ```
 
 **Response `204`**
@@ -1707,16 +1906,16 @@ DELETE /dashboards/:dashboardId/pages/:pageId/charts/:chartId
 > 권한: EDITOR 이상
 
 ```
-POST /dashboards/:dashboardId/pages/:pageId/charts/:chartId/duplicate
+POST /dashboards/:dashboard_id/pages/:page_id/charts/:chart_id/duplicate
 ```
 
 **Request Body** (선택적)
 
 ```json
 {
-  "targetPageId": "uuid",   // 다른 페이지로 복제 시 지정
-  "offsetX": 20,
-  "offsetY": 20
+  "target_page_id": "uuid",
+  "offset_x": 20,
+  "offset_y": 20
 }
 ```
 
@@ -1731,7 +1930,7 @@ POST /dashboards/:dashboardId/pages/:pageId/charts/:chartId/duplicate
 > 권한: 소유자 또는 ADMIN 이상
 
 ```
-PATCH /dashboards/:dashboardId/pages/:pageId/charts/positions
+PATCH /dashboards/:dashboard_id/pages/:page_id/charts/positions
 ```
 
 **Request Body**
@@ -1739,8 +1938,8 @@ PATCH /dashboards/:dashboardId/pages/:pageId/charts/positions
 ```json
 {
   "updates": [
-    { "chartId": "uuid", "x": 0, "y": 0, "width": 800, "height": 400 },
-    { "chartId": "uuid", "x": 820, "y": 0, "width": 400, "height": 400 }
+    { "chart_id": "uuid", "x": 0, "y": 0, "width": 800, "height": 400 },
+    { "chart_id": "uuid", "x": 820, "y": 0, "width": 400, "height": 400 }
   ]
 }
 ```
@@ -1750,7 +1949,7 @@ PATCH /dashboards/:dashboardId/pages/:pageId/charts/positions
 ```json
 {
   "success": true,
-  "data": { "updatedCount": 2 }
+  "data": { "updated_count": 2 }
 }
 ```
 
@@ -1763,7 +1962,7 @@ PATCH /dashboards/:dashboardId/pages/:pageId/charts/positions
 > 권한: 소유자 또는 ADMIN 이상
 
 ```
-POST /dashboards/:dashboardId/pages/:pageId/chart-groups
+POST /dashboards/:dashboard_id/pages/:page_id/chart-groups
 ```
 
 **Request Body**
@@ -1771,7 +1970,7 @@ POST /dashboards/:dashboardId/pages/:pageId/chart-groups
 ```json
 {
   "name": "브랜드 섹션",
-  "chartIds": ["uuid1", "uuid2"]
+  "chart_ids": ["uuid1", "uuid2"]
 }
 ```
 
@@ -1783,7 +1982,7 @@ POST /dashboards/:dashboardId/pages/:pageId/chart-groups
   "data": {
     "id": "uuid",
     "name": "브랜드 섹션",
-    "chartIds": ["uuid1", "uuid2"]
+    "chart_ids": ["uuid1", "uuid2"]
   }
 }
 ```
@@ -1796,7 +1995,7 @@ POST /dashboards/:dashboardId/pages/:pageId/chart-groups
 필터 파라미터는 현재 페이지에 활성화된 필터 값들을 전달합니다.
 
 ```
-POST /dashboards/:dashboardId/pages/:pageId/charts/:chartId/data
+POST /dashboards/:dashboard_id/pages/:page_id/charts/:chart_id/data
 ```
 
 **Request Body**
@@ -1804,10 +2003,10 @@ POST /dashboards/:dashboardId/pages/:pageId/charts/:chartId/data
 ```json
 {
   "filters": [
-    { "filterId": "uuid", "value": "2026-02-01" },
-    { "filterId": "uuid", "value": ["닥터트루", "바른농장"] }
+    { "filter_id": "uuid", "value": "2026-02-01" },
+    { "filter_id": "uuid", "value": ["닥터트루", "바른농장"] }
   ],
-  "sort": { "fieldId": "settlement_amount", "direction": "DESC" },
+  "sort": { "field_id": "settlement_amount", "direction": "DESC" },
   "page": 1,
   "limit": 20
 }
@@ -1820,8 +2019,8 @@ POST /dashboards/:dashboardId/pages/:pageId/charts/:chartId/data
   "success": true,
   "data": {
     "columns": [
-      { "fieldId": "brand", "label": "브랜드", "type": "TEXT" },
-      { "fieldId": "settlement_amount", "label": "결제금액", "type": "NUMBER", "aggregate": "SUM" }
+      { "field_id": "brand", "label": "브랜드", "type": "TEXT" },
+      { "field_id": "settlement_amount", "label": "결제금액", "type": "NUMBER", "aggregate": "SUM" }
     ],
     "rows": [
       ["닥터트루", 13681410],
@@ -1831,7 +2030,7 @@ POST /dashboards/:dashboardId/pages/:pageId/charts/:chartId/data
     "total": 5,
     "page": 1,
     "limit": 20,
-    "queriedAt": "2026-02-28T09:01:23Z"
+    "queried_at": "2026-02-28T09:01:23Z"
   }
 }
 ```
@@ -1841,16 +2040,16 @@ POST /dashboards/:dashboardId/pages/:pageId/charts/:chartId/data
 ### 6.10. 차트 데이터 내보내기
 
 ```
-POST /dashboards/:dashboardId/pages/:pageId/charts/:chartId/export
+POST /dashboards/:dashboard_id/pages/:page_id/charts/:chart_id/export
 ```
 
 **Request Body**
 
 ```json
 {
-  "format": "XLSX",      // XLSX | CSV
+  "format": "XLSX",
   "filters": [ ... ],
-  "includeHeaders": true
+  "include_headers": true
 }
 ```
 
@@ -1873,7 +2072,7 @@ Content-Disposition: attachment; filename="chart_export_20260228.xlsx"
 > 권한: EDITOR 이상
 
 ```
-POST /dashboards/:dashboardId/pages/:pageId/filters
+POST /dashboards/:dashboard_id/pages/:page_id/filters
 ```
 
 **Request Body**
@@ -1886,11 +2085,11 @@ POST /dashboards/:dashboardId/pages/:pageId/filters
   "y": 10,
   "width": 280,
   "height": 40,
-  "datasourceId": "uuid",
-  "fieldId": "order_date",
+  "datasource_id": "uuid",
+  "field_id": "order_date",
   "config": {
-    "defaultValue": "LAST_7_DAYS",  // TODAY | YESTERDAY | LAST_7_DAYS | THIS_MONTH | CUSTOM
-    "applyTo": "PAGE"               // PAGE | chart_id
+    "default_value": "LAST_7_DAYS",
+    "apply_to": "PAGE"
   }
 }
 ```
@@ -1908,10 +2107,10 @@ POST /dashboards/:dashboardId/pages/:pageId/filters
     "y": 10,
     "width": 280,
     "height": 40,
-    "datasourceId": "uuid",
-    "fieldId": "order_date",
+    "datasource_id": "uuid",
+    "field_id": "order_date",
     "config": { ... },
-    "createdAt": "2026-02-28T09:00:00Z"
+    "created_at": "2026-02-28T09:00:00Z"
   }
 }
 ```
@@ -1920,10 +2119,10 @@ POST /dashboards/:dashboardId/pages/:pageId/filters
 
 | 타입 | config 필드 |
 |---|---|
-| DROPDOWN | `multiSelect: boolean`, `defaultValue: string[]`, `applyTo` |
-| TEXT_INPUT | `operator: FilterOp`, `placeholder`, `applyTo` |
-| RANGE | `operator: FilterOp`, `min, max`, `step`, `applyTo` |
-| DATE_RANGE | `defaultValue`, `applyTo` |
+| DROPDOWN | `multi_select: boolean`, `default_value: string[]`, `apply_to` |
+| TEXT_INPUT | `operator: FilterOp`, `placeholder`, `apply_to` |
+| RANGE | `operator: FilterOp`, `min, max`, `step`, `apply_to` |
+| DATE_RANGE | `default_value`, `apply_to` |
 
 ---
 
@@ -1932,7 +2131,7 @@ POST /dashboards/:dashboardId/pages/:pageId/filters
 > 권한: 소유자 또는 ADMIN 이상
 
 ```
-PATCH /dashboards/:dashboardId/pages/:pageId/filters/:filterId
+PATCH /dashboards/:dashboard_id/pages/:page_id/filters/:filter_id
 ```
 
 **Request Body** (모든 필드 선택적) — 7.1 Request Body 참고
@@ -1946,7 +2145,7 @@ PATCH /dashboards/:dashboardId/pages/:pageId/filters/:filterId
 > 권한: 소유자 또는 ADMIN 이상
 
 ```
-DELETE /dashboards/:dashboardId/pages/:pageId/filters/:filterId
+DELETE /dashboards/:dashboard_id/pages/:page_id/filters/:filter_id
 ```
 
 **Response `204`**
@@ -1958,24 +2157,24 @@ DELETE /dashboards/:dashboardId/pages/:pageId/filters/:filterId
 > 권한: 소유자 또는 ADMIN 이상
 
 ```
-PUT /dashboards/:dashboardId/pages/:pageId/default-filters
+PUT /dashboards/:dashboard_id/pages/:page_id/default-filters
 ```
 
 **Request Body**
 
 ```json
 {
-  "applyTo": "PAGE",        // PAGE | chart_id
+  "apply_to": "PAGE",
   "rules": [
     {
-      "datasourceId": "uuid",
-      "fieldId": "is_active",
+      "datasource_id": "uuid",
+      "field_id": "is_active",
       "operator": "EQ",
       "value": true
     },
     {
-      "datasourceId": "uuid",
-      "fieldId": "brand",
+      "datasource_id": "uuid",
+      "field_id": "brand",
       "operator": "EQ",
       "value": "닥터트루"
     }
@@ -1999,7 +2198,7 @@ PUT /dashboards/:dashboardId/pages/:pageId/default-filters
 ### 8.1. 조건부 서식 목록 조회
 
 ```
-GET /dashboards/:dashboardId/pages/:pageId/charts/:chartId/conditional-formats
+GET /dashboards/:dashboard_id/pages/:page_id/charts/:chart_id/conditional-formats
 ```
 
 **Response `200`**
@@ -2011,26 +2210,26 @@ GET /dashboards/:dashboardId/pages/:pageId/charts/:chartId/conditional-formats
     "items": [
       {
         "id": "uuid",
-        "chartId": "uuid",
+        "chart_id": "uuid",
         "name": "ROI 색상 서식",
         "order": 1,
-        "applyTo": "CELL",          // CELL | ROW
-        "targetFields": ["roi"],
+        "apply_to": "CELL",
+        "target_fields": ["roi"],
         "rules": [
           {
             "operator": "LT",
             "value": 0,
             "style": {
-              "backgroundColor": "#fee2e2",
+              "background_color": "#fee2e2",
               "color": "#dc2626",
-              "fontWeight": "bold"
+              "font_weight": "bold"
             }
           },
           {
             "operator": "GTE",
             "value": 50,
             "style": {
-              "backgroundColor": "#dcfce7",
+              "background_color": "#dcfce7",
               "color": "#16a34a"
             }
           }
@@ -2048,7 +2247,7 @@ GET /dashboards/:dashboardId/pages/:pageId/charts/:chartId/conditional-formats
 > 권한: EDITOR 이상
 
 ```
-POST /dashboards/:dashboardId/pages/:pageId/charts/:chartId/conditional-formats
+POST /dashboards/:dashboard_id/pages/:page_id/charts/:chart_id/conditional-formats
 ```
 
 **Request Body**
@@ -2056,19 +2255,19 @@ POST /dashboards/:dashboardId/pages/:pageId/charts/:chartId/conditional-formats
 ```json
 {
   "name": "ROI 색상 서식",
-  "applyTo": "CELL",           // CELL | ROW
-  "targetFields": ["roi"],     // applyTo=ROW인 경우 조건 판단에 사용할 필드
+  "apply_to": "CELL",
+  "target_fields": ["roi"],
   "rules": [
     {
-      "operator": "LT",        // FilterOp 참고
+      "operator": "LT",
       "value": 0,
-      "secondValue": null,     // BETWEEN 연산자 사용 시 상한값
+      "second_value": null,
       "style": {
-        "backgroundColor": "#fee2e2",
+        "background_color": "#fee2e2",
         "color": "#dc2626",
-        "fontWeight": "normal",   // normal | bold
-        "fontStyle": "normal",    // normal | italic
-        "textDecoration": "none"  // none | underline | line-through
+        "font_weight": "normal",
+        "font_style": "normal",
+        "text_decoration": "none"
       }
     }
   ]
@@ -2084,10 +2283,10 @@ POST /dashboards/:dashboardId/pages/:pageId/charts/:chartId/conditional-formats
     "id": "uuid",
     "name": "ROI 색상 서식",
     "order": 1,
-    "applyTo": "CELL",
-    "targetFields": ["roi"],
+    "apply_to": "CELL",
+    "target_fields": ["roi"],
     "rules": [ ... ],
-    "createdAt": "2026-02-28T09:00:00Z"
+    "created_at": "2026-02-28T09:00:00Z"
   }
 }
 ```
@@ -2099,7 +2298,7 @@ POST /dashboards/:dashboardId/pages/:pageId/charts/:chartId/conditional-formats
 > 권한: EDITOR 이상
 
 ```
-PATCH /dashboards/:dashboardId/pages/:pageId/charts/:chartId/conditional-formats/:formatId
+PATCH /dashboards/:dashboard_id/pages/:page_id/charts/:chart_id/conditional-formats/:format_id
 ```
 
 **Request Body** — 8.2 Request Body 참고 (모든 필드 선택적)
@@ -2113,7 +2312,7 @@ PATCH /dashboards/:dashboardId/pages/:pageId/charts/:chartId/conditional-formats
 > 권한: EDITOR 이상
 
 ```
-DELETE /dashboards/:dashboardId/pages/:pageId/charts/:chartId/conditional-formats/:formatId
+DELETE /dashboards/:dashboard_id/pages/:page_id/charts/:chart_id/conditional-formats/:format_id
 ```
 
 **Response `204`**
@@ -2127,7 +2326,7 @@ DELETE /dashboards/:dashboardId/pages/:pageId/charts/:chartId/conditional-format
 > 권한: EDITOR 이상
 
 ```
-PATCH /dashboards/:dashboardId/pages/:pageId/charts/:chartId/conditional-formats/reorder
+PATCH /dashboards/:dashboard_id/pages/:page_id/charts/:chart_id/conditional-formats/reorder
 ```
 
 **Request Body**
@@ -2135,8 +2334,8 @@ PATCH /dashboards/:dashboardId/pages/:pageId/charts/:chartId/conditional-formats
 ```json
 {
   "orders": [
-    { "formatId": "uuid", "order": 1 },
-    { "formatId": "uuid", "order": 2 }
+    { "format_id": "uuid", "order": 1 },
+    { "format_id": "uuid", "order": 2 }
   ]
 }
 ```
@@ -2157,14 +2356,14 @@ PATCH /dashboards/:dashboardId/pages/:pageId/charts/:chartId/conditional-formats
 > 권한: EDITOR 이상
 
 ```
-POST /dashboards/:dashboardId/pages/:pageId/charts/:chartId/conditional-formats/:formatId/copy
+POST /dashboards/:dashboard_id/pages/:page_id/charts/:chart_id/conditional-formats/:format_id/copy
 ```
 
 **Request Body**
 
 ```json
 {
-  "targetChartId": "uuid"
+  "target_chart_id": "uuid"
 }
 ```
 
@@ -2180,7 +2379,7 @@ Viewer 포함 모든 사용자가 차트의 메트릭, 정렬 등을 개인적�
 ### 9.1. 개인 뷰 저장/갱신
 
 ```
-PUT /dashboards/:dashboardId/pages/:pageId/charts/:chartId/my-view
+PUT /dashboards/:dashboard_id/pages/:page_id/charts/:chart_id/my-view
 ```
 
 **Request Body** (모든 필드 선택적, 저장할 항목만 포함)
@@ -2188,10 +2387,10 @@ PUT /dashboards/:dashboardId/pages/:pageId/charts/:chartId/my-view
 ```json
 {
   "metrics": ["settlement_amount", "margin", "roi"],
-  "sort": { "fieldId": "settlement_amount", "direction": "DESC" },
-  "columnWidths": { "brand": 120, "roi": 80 },
-  "frozenColumns": ["brand"],
-  "rowsPerPage": 50
+  "sort": { "field_id": "settlement_amount", "direction": "DESC" },
+  "column_widths": { "brand": 120, "roi": 80 },
+  "frozen_columns": ["brand"],
+  "rows_per_page": 50
 }
 ```
 
@@ -2201,9 +2400,9 @@ PUT /dashboards/:dashboardId/pages/:pageId/charts/:chartId/my-view
 {
   "success": true,
   "data": {
-    "chartId": "uuid",
+    "chart_id": "uuid",
     "config": { ... },
-    "updatedAt": "2026-02-28T09:05:00Z"
+    "updated_at": "2026-02-28T09:05:00Z"
   }
 }
 ```
@@ -2213,7 +2412,7 @@ PUT /dashboards/:dashboardId/pages/:pageId/charts/:chartId/my-view
 ### 9.2. 개인 뷰 조회
 
 ```
-GET /dashboards/:dashboardId/pages/:pageId/charts/:chartId/my-view
+GET /dashboards/:dashboard_id/pages/:page_id/charts/:chart_id/my-view
 ```
 
 **Response `200`** — 9.1 응답과 동일 구조
@@ -2223,7 +2422,7 @@ GET /dashboards/:dashboardId/pages/:pageId/charts/:chartId/my-view
 ### 9.3. 개인 뷰 초기화
 
 ```
-DELETE /dashboards/:dashboardId/pages/:pageId/charts/:chartId/my-view
+DELETE /dashboards/:dashboard_id/pages/:page_id/charts/:chart_id/my-view
 ```
 
 **Response `204`**
@@ -2267,14 +2466,14 @@ GET /number-formats
 ### 11.1. 내 알림 목록 조회
 
 ```
-GET /notifications?isRead=false
+GET /notifications?is_read=false
 ```
 
 **Query Parameters**
 
 | 파라미터 | 타입 | 설명 |
 |---|---|---|
-| `isRead` | boolean | 읽음 여부 필터 |
+| `is_read` | boolean | 읽음 여부 필터 |
 
 **Response `200`**
 
@@ -2285,15 +2484,15 @@ GET /notifications?isRead=false
     "items": [
       {
         "id": "uuid",
-        "type": "REGISTER_REQUEST",   // REGISTER_REQUEST | REGISTER_APPROVED | REGISTER_REJECTED
+        "type": "REGISTER_REQUEST",
         "title": "새 회원가입 요청",
         "message": "홍길동(user@example.com) 님이 회원가입을 요청했습니다.",
-        "linkUrl": "/admin/users/requests",
-        "isRead": false,
-        "createdAt": "2026-02-28T09:00:00Z"
+        "link_url": "/admin/users/requests",
+        "is_read": false,
+        "created_at": "2026-02-28T09:00:00Z"
       }
     ],
-    "unreadCount": 3
+    "unread_count": 3
   }
 }
 ```
@@ -2310,8 +2509,8 @@ PATCH /notifications/read
 
 ```json
 {
-  "notificationIds": ["uuid1", "uuid2"],
-  "readAll": false    // true이면 notificationIds 무시하고 전체 읽음 처리
+  "notification_ids": ["uuid1", "uuid2"],
+  "read_all": false
 }
 ```
 
@@ -2320,7 +2519,7 @@ PATCH /notifications/read
 ```json
 {
   "success": true,
-  "data": { "updatedCount": 2 }
+  "data": { "updated_count": 2 }
 }
 ```
 
@@ -2345,10 +2544,10 @@ GET /admin/smtp
     "host": "smtp.gmail.com",
     "port": 587,
     "username": "noreply@example.com",
-    "useTls": true,
-    "fromName": "LookFlex",
-    "fromEmail": "noreply@example.com",
-    "isConfigured": true
+    "use_tls": true,
+    "from_name": "LookFlex",
+    "from_email": "noreply@example.com",
+    "is_configured": true
   }
 }
 ```
@@ -2371,9 +2570,9 @@ PUT /admin/smtp
   "port": 587,
   "username": "noreply@example.com",
   "password": "app-password",
-  "useTls": true,
-  "fromName": "LookFlex",
-  "fromEmail": "noreply@example.com"
+  "use_tls": true,
+  "from_name": "LookFlex",
+  "from_email": "noreply@example.com"
 }
 ```
 
@@ -2393,7 +2592,7 @@ POST /admin/smtp/test
 
 ```json
 {
-  "toEmail": "test@example.com"
+  "to_email": "test@example.com"
 }
 ```
 
@@ -2435,14 +2634,14 @@ GET /health
 > 권한: ADMIN 이상
 
 ```
-GET /admin/audit-logs?userId=uuid&action=DATA_QUERY&from=2026-02-01T00:00:00Z&to=2026-02-28T23:59:59Z&page=1&limit=50
+GET /admin/audit-logs?user_id=uuid&action=DATA_QUERY&from=2026-02-01T00:00:00Z&to=2026-02-28T23:59:59Z&page=1&limit=50
 ```
 
 **Query Parameters**
 
 | 파라미터 | 타입 | 설명 |
 |---|---|---|
-| `userId` | UUID | 특정 사용자 필터 |
+| `user_id` | UUID | 특정 사용자 필터 |
 | `action` | string | 액션 타입 필터 |
 | `from` | ISO8601 | 시작 일시 |
 | `to` | ISO8601 | 종료 일시 |
@@ -2458,18 +2657,18 @@ GET /admin/audit-logs?userId=uuid&action=DATA_QUERY&from=2026-02-01T00:00:00Z&to
     "items": [
       {
         "id": "uuid",
-        "userId": "uuid",
-        "userName": "홍길동",
+        "user_id": "uuid",
+        "user_name": "홍길동",
         "action": "DATA_QUERY",
-        "detail": { "chartId": "uuid", "datasourceId": "uuid" },
-        "ipAddress": "192.168.1.10",
-        "createdAt": "2026-02-28T09:01:23Z"
+        "detail": { "chart_id": "uuid", "datasource_id": "uuid" },
+        "ip_address": "192.168.1.10",
+        "created_at": "2026-02-28T09:01:23Z"
       }
     ],
     "total": 200,
     "page": 1,
     "limit": 50,
-    "totalPages": 4
+    "total_pages": 4
   }
 }
 ```
