@@ -1,0 +1,39 @@
+# 환경변수 및 시크릿
+.env
+.env.local
+secrets/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node.js
+node_modules/
+.next/
+.turbo/
+out/
+
+# 빌드 결과물
+dist/
+build/
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# 로컬 개발 임시 파일
+*.sql.gz
+*.log
+!docs/chat.log
