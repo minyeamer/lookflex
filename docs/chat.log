@@ -221,13 +221,111 @@ Docker Compose:
 
 완료 후 상태
 ------------
-  - main 브랜치에 root commit 1개 (ce0032e → 재커밋 예정)
-  - dev 브랜치 로컬 생성 완료
-  - git push는 아직 실행 전
+  - main 브랜치에 root commit 1개 (a6f069c)
+  - dev 브랜치 생성 및 origin push 완료 (main, dev 모두)
+  - git push 완료
 
 다음 단계 (예정)
 ----------------
-  1. git push -u origin main && git push -u origin dev
-  2. feature/backend-initial-setup 브랜치에서 SQLAlchemy 모델 작성
-  3. Alembic 초기 마이그레이션 생성
-  4. apps/frontend/ Next.js 스캐폴딩
+  1. feature/backend-models 브랜치에서 SQLAlchemy 모델 작성  ← 진행 예정
+  2. Alembic 초기 마이그레이션 생성
+  3. apps/frontend/ Next.js 스캐폴딩
+
+================================================================================
+[2026-02-28] SQLAlchemy 모델 및 Alembic 초기 마이그레이션
+            (feat: add SQLAlchemy models and initial Alembic migration)
+================================================================================
+
+작업 내용
+---------
+api.md의 13개 도메인 전체를 커버하는 SQLAlchemy 2.0 async 모델을 작성하고
+Alembic 초기 마이그레이션 파일을 수동으로 생성했다.
+브랜치: feature/backend-models (dev 기준)
+
+생성된 파일 (apps/backend/app/db/models/)
+------------------------------------------
+  enums.py        — 프로젝트 전체 Enum 정의 (12종)
+                    Role, ApprovalStatus, GroupType, DSSourceType, FieldType,
+                    AggregateType, ChartType, FilterType, FilterOp, SortDir,
+                    CondFormatApplyTo, NotificationType, AuditAction
+
+  user.py         — User, Group, RegisterRequest + user_group M2M 연결 테이블
+                    User.role (OWNER/ADMIN/EDITOR/VIEWER), is_active, email_verified_at
+                    RegisterRequest: 이메일 인증 → 관리자 승인 대기 플로우용
+
+  dashboard.py    — Dashboard, Page, DashboardFavorite, PageFavorite
+                    Page.dashboard_id nullable (독립 페이지 허용)
+                    Page: x/y/width/height px 단위 캔버스, background_color
+
+  datasource.py   — DataSource, DataSourceField, DataSourcePermission
+                    connection_config: JSONB (암호화는 서비스 레이어에서 처리)
+                    allow_all 플래그 + entity_type/entity_id 조합으로 Fine-grained 권한 관리
+
+  chart.py        — Chart, ChartGroup, ChartGroupItem
+                    Chart.config JSONB: 차트 타입별 설정 (dimensions, metrics 등)
+                    Chart.style JSONB: 헤더/바디/합계행 스타일
+                    ChartGroup: 여러 차트를 묶어 이동/크기조정 연동
+
+  filter.py       — Filter, DefaultFilterRule
+                    Filter: 페이지에 배치되는 인터랙티브 UI 요소
+                    DefaultFilterRule.apply_to: "PAGE" 또는 chart_id 문자열
+
+  formatting.py   — ConditionalFormat, ConditionalFormatRule
+                    ConditionalFormat.order: 서식 평가 순서 (낮을수록 우선)
+                    ConditionalFormatRule.style JSONB: backgroundColor, color, fontWeight 등
+
+  view_config.py  — UserViewConfig
+                    user_id + chart_id UNIQUE 제약 (사용자별 1개)
+                    config JSONB: metrics, sort, columnWidths, frozenColumns, rowsPerPage
+
+  notification.py — Notification
+                    is_read, created_at 인덱스 포함
+
+  system.py       — SmtpConfig (싱글턴 id=1), AuditLog
+                    AuditLog.detail JSONB: 액션별 상세 (chartId, datasourceId 등)
+
+  __init__.py     — 모든 모델 import (Alembic autogenerate 인식용)
+
+생성된 마이그레이션 파일
+------------------------
+  alembic/versions/a1b2c3d4e5f6_initial_schema.py
+    - Revision: a1b2c3d4e5f6, down_revision: None (root)
+    - upgrade(): PostgreSQL Enum 타입 12종 생성 후 테이블 22개 생성
+    - downgrade(): 역순 삭제 (FK 의존성 고려)
+    - 수동 작성 (DB 연결 없이 생성, 컨테이너 첫 기동 시 자동 적용)
+
+테이블 목록 (22개)
+-------------------
+  audit_logs, chart_group_items, chart_groups, charts,
+  conditional_format_rules, conditional_formats,
+  dashboard_favorites, dashboards,
+  datasource_fields, datasource_permissions, datasources,
+  default_filter_rules, filters, groups, notifications,
+  page_favorites, pages, register_requests,
+  smtp_configs, user_group, user_view_configs, users
+
+검증 방법
+---------
+  conda run -n main python -c "from app.db.models import *; ..."
+  → 22개 테이블 정상 등록 확인 (SQLAlchemy 2.0 업그레이드 필요: pip install sqlalchemy>=2.0)
+  → alembic/versions/*.py AST 파싱 오류 없음
+
+설계 결정 사항
+--------------
+  JSONB 사용 필드:
+    - DataSource.connection_config — DB 연결 정보 (암호화 후 저장 예정)
+    - Chart.config / style — 차트 타입별 설정/스타일 자유도 확보
+    - Filter.config — 필터 타입별 설정
+    - ConditionalFormatRule.value / second_value — 숫자·문자·null 통합 수용
+    - UserViewConfig.config — 사용자 개인 뷰 오버라이드 전체
+    - AuditLog.detail — 액션별 부가 정보
+
+  소프트 딜리트 미채택: is_active(User만), 나머지는 CASCADE DELETE
+  SmtpConfig: 싱글턴 패턴 (Integer PK id=1), 복수 설정 불필요
+
+다음 단계 (예정)
+----------------
+  1. PR: feature/backend-models → dev 머지
+  2. feature/backend-auth 브랜치에서 Auth API 구현
+     (회원가입, 이메일 인증, 로그인, JWT, 비밀번호 재설정)
+  3. apps/frontend/ Next.js 스캐폴딩
