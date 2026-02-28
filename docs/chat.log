@@ -594,34 +594,34 @@ OTP가 발송됐는데, 이는 UI 흐름과 반대다.
 변경 사항 요약
 --------------
 1. docs/ai-guidelines.md 신규 생성
-     - 다른 프로젝트의 ai-guidelines.md를 이 프로젝트에 맞게 재작성
-     - 버전 관리, 커밋 규칙, 브랜치 전략, 문서 작성 규칙, 기술 스택 포함
-     - 테스트 파일 경로 규칙: docs/tests/{순번}-{도메인}.md
+  - 다른 프로젝트의 ai-guidelines.md를 이 프로젝트에 맞게 재작성
+  - 버전 관리, 커밋 규칙, 브랜치 전략, 문서 작성 규칙, 기술 스택 포함
+  - 테스트 파일 경로 규칙: docs/tests/{순번}-{도메인}.md
 
 2. Auth 플로우 UI 중심 재설계 (0.1.0 → 0.1.1)
-     변경 전 플로우:
-       POST /register (DB 기록 생성 + OTP 발송)
-       → POST /verify-email (OTP 검증 + DB email_verified_at 기록)
-     변경 후 플로우:
-       POST /send-verification (Redis OTP 저장만, DB 없음)
-       → POST /verify-email (OTP 검증, Redis email_verified:{email} 저장, 30분 TTL)
-       → POST /register (Redis 인증 여부 확인 후 RegisterRequest 생성, email_verified_at 즉시 기록)
+  변경 전 플로우:
+    POST /register (DB 기록 생성 + OTP 발송)
+    → POST /verify-email (OTP 검증 + DB email_verified_at 기록)
+  변경 후 플로우:
+    POST /send-verification (Redis OTP 저장만, DB 없음)
+    → POST /verify-email (OTP 검증, Redis email_verified:{email} 저장, 30분 TTL)
+    → POST /register (Redis 인증 여부 확인 후 RegisterRequest 생성, email_verified_at 즉시 기록)
 
 3. 신규/수정 파일
-     app/core/redis.py          — email_verified_key(email) 헬퍼 추가
-     app/schemas/auth.py        — SendVerificationRequest 스키마 추가
-     app/services/email_service.py — send_otp_email(to, code, name="사용자") name 선택적으로 변경
-     app/services/auth_service.py  — send_verification 메서드 신규,
-                                      verify_email DB 의존성 제거 (Redis만),
-                                      register 인증 확인 로직 추가,
-                                      resend_code DB 의존성 제거
-     app/api/v1/auth.py         — POST /send-verification 엔드포인트 추가
-     apps/backend/pyproject.toml, app/main.py — 버전 0.1.0 → 0.1.1
-     docs/api.md                — §1 Auth 재구성: 1.1~1.11 (기존 10개 → 11개 엔드포인트)
-     docs/tests/01-auth.md      — 새 플로우 반영 (3.1 send-verification 추가, 섹션 번호 조정)
+  app/core/redis.py          — email_verified_key(email) 헬퍼 추가
+  app/schemas/auth.py        — SendVerificationRequest 스키마 추가
+  app/services/email_service.py — send_otp_email(to, code, name="사용자") name 선택적으로 변경
+  app/services/auth_service.py  — send_verification 메서드 신규,
+                                  verify_email DB 의존성 제거 (Redis만),
+                                  register 인증 확인 로직 추가,
+                                  resend_code DB 의존성 제거
+  app/api/v1/auth.py         — POST /send-verification 엔드포인트 추가
+  apps/backend/pyproject.toml, app/main.py — 버전 0.1.0 → 0.1.1
+  docs/api.md                — §1 Auth 재구성: 1.1~1.11 (기존 10개 → 11개 엔드포인트)
+  docs/tests/01-auth.md      — 새 플로우 반영 (3.1 send-verification 추가, 섹션 번호 조정)
 
 4. docs/tests/ 경로 표준화
-     기존 docs/testing.md → 사용자가 docs/tests/01-auth.md로 이동 완료
+  기존 docs/testing.md → 사용자가 docs/tests/01-auth.md로 이동 완료
 
 설계 결정 사항
 --------------
@@ -652,22 +652,22 @@ OTP가 발송됐는데, 이는 UI 흐름과 반대다.
 변경 사항
 ---------
 1. docker-compose.dev.yml — 서비스 포트를 환경변수 기본값으로 노출
-     ${POSTGRES_PORT:-5432}:5432
-     ${REDIS_PORT:-6379}:6379    ← 호스트 포트만 변경, 컨테이너 내부는 항상 6379
-     ${BACKEND_PORT:-8000}:8000
-     ${FRONTEND_PORT:-3000}:3000
+  ${POSTGRES_PORT:-5432}:5432
+  ${REDIS_PORT:-6379}:6379    ← 호스트 포트만 변경, 컨테이너 내부는 항상 6379
+  ${BACKEND_PORT:-8000}:8000
+  ${FRONTEND_PORT:-3000}:3000
 
 2. docker-compose.yml
-     nginx: ${NGINX_HTTP_PORT:-80}:80
+  nginx: ${NGINX_HTTP_PORT:-80}:80
 
 3. config.py — REDIS_URL 컴포넌트 분리 (model_validator 사용)
-     REDIS_URL이 비어 있으면 REDIS_HOST / REDIS_PORT / REDIS_PASSWORD / REDIS_DB 로 조합
-     Docker에서는 REDIS_URL을 직접 주입 → validator 건너뜀
-     로컬에서는 .env의 REDIS_PORT 값을 읽어 유연하게 적용
+  REDIS_URL이 비어 있으면 REDIS_HOST / REDIS_PORT / REDIS_PASSWORD / REDIS_DB 로 조합
+  Docker에서는 REDIS_URL을 직접 주입 → validator 건너뜀
+  로컬에서는 .env의 REDIS_PORT 값을 읽어 유연하게 적용
 
 4. .env.example — Redis 컴포넌트 변수 및 포트 오버라이드 섹션 참고용 추가
-     REDIS_PASSWORD, REDIS_HOST, REDIS_PORT, REDIS_DB, REDIS_URL 주석 처리로 안내
-     포트 오버라이드: POSTGRES_PORT, REDIS_PORT, BACKEND_PORT, FRONTEND_PORT, NGINX_HTTP_PORT
+  REDIS_PASSWORD, REDIS_HOST, REDIS_PORT, REDIS_DB, REDIS_URL 주석 처리로 안내
+  포트 오버라이드: POSTGRES_PORT, REDIS_PORT, BACKEND_PORT, FRONTEND_PORT, NGINX_HTTP_PORT
 
 5. docs/infra.md — Redis 포트 관련 기술 내용 갱신
 
