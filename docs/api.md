@@ -91,34 +91,36 @@ ApprovalStatus: PENDING | APPROVED | REJECTED
 
 ## 1. 인증 (Auth)
 
-### 1.1. 회원가입 요청
+> **회원가입 플로우 (UI 기준)**
+> 1. `POST /auth/send-verification` → 이메일 입력 후 OTP 요청
+> 2. `POST /auth/verify-email` → OTP 입력 후 인증 확인 (제출 버튼 활성화)
+> 3. `POST /auth/register` → 나머지 정보 입력 후 회원가입 제출
 
-이메일 인증 코드를 발송하고 회원가입 요청을 대기 상태로 등록합니다.
-관리자에게 승인 대기 알림이 전송됩니다.
+---
+
+### 1.1. 이메일 인증 코드 발송
+
+이메일 주소만으로 OTP를 발송합니다. DB 기록 수행 없음.
 
 ```
-POST /auth/register
+POST /auth/send-verification
 ```
 
 **Request Body**
 
 ```json
 {
-  "email": "user@example.com",
-  "password": "P@ssw0rd!",
-  "name": "홍길동",
-  "requestedRole": "EDITOR"   // EDITOR | VIEWER 만 선택 가능
+  "email": "user@example.com"
 }
 ```
 
-**Response `201`**
+**Response `200`**
 
 ```json
 {
   "success": true,
   "data": {
-    "message": "이메일 인증 코드가 발송되었습니다.",
-    "email": "user@example.com"
+    "message": "인증 코드가 발송되었습니다."
   }
 }
 ```
@@ -128,11 +130,13 @@ POST /auth/register
 | 상태 | code | 설명 |
 |---|---|---|
 | 409 | EMAIL_ALREADY_EXISTS | 이미 가입된 이메일 |
-| 409 | REGISTER_REQUEST_PENDING | 동일 이메일로 대기 중인 요청 존재 |
 
 ---
 
 ### 1.2. 이메일 인증 코드 확인
+
+OTP를 검증하고 Redis에 인증 완료 플래그를 저장합니다 (30분 유효).
+DB 수정 없음 — 회원가입 제출 전까지의 UI 메시지 활성화 용도.
 
 ```
 POST /auth/verify-email
@@ -153,7 +157,7 @@ POST /auth/verify-email
 {
   "success": true,
   "data": {
-    "message": "이메일 인증이 완료되었습니다. 관리자 승인을 기다려주세요."
+    "message": "이메일 인증이 완료되었습니다. 회원가입을 이어서 진행해주세요."
   }
 }
 ```
@@ -167,7 +171,7 @@ POST /auth/verify-email
 
 ---
 
-### 1.3. 이메일 인증 코드 재발송
+### 1.3. 인증코드 재발송
 
 ```
 POST /auth/resend-code
@@ -194,7 +198,49 @@ POST /auth/resend-code
 
 ---
 
-### 1.4. 로그인
+### 1.4. 회원가입 요청
+
+`/verify-email` 완료 후 나머지 정보를 제출합니다.
+Redis에 인증 완료된 이메일이 없으면 403을 반환합니다.
+승인된 이후 로그인 가능 상태로 사용자 계정이 생성됩니다.
+
+```
+POST /auth/register
+```
+
+**Request Body**
+
+```json
+{
+  "email": "user@example.com",
+  "password": "P@ssw0rd!",
+  "name": "홍길동",
+  "requested_role": "EDITOR"   // EDITOR | VIEWER 만 선택 가능
+}
+```
+
+**Response `201`**
+
+```json
+{
+  "success": true,
+  "data": {
+    "message": "회원가입 요청이 완료되었습니다. 관리자 승인을 기다려주세요.",
+    "email": "user@example.com"
+  }
+}
+```
+
+**Error Cases**
+
+| 상태 | code | 설명 |
+|---|---|---|
+| 409 | EMAIL_ALREADY_EXISTS | 이미 가입된 이메일 |
+| 409 | REGISTER_REQUEST_PENDING | 동일 이메일로 대기 중인 요청 존재 |
+
+---
+
+### 1.5. 로그인
 
 ```
 POST /auth/login
@@ -237,7 +283,7 @@ Set-Cookie: `refresh_token=<token>; HttpOnly; SameSite=Strict; Path=/api/v1/auth
 
 ---
 
-### 1.5. 토큰 갱신
+### 1.6. 토큰 갱신
 
 ```
 POST /auth/refresh
@@ -260,7 +306,7 @@ POST /auth/refresh
 
 ---
 
-### 1.6. 로그아웃
+### 1.7. 로그아웃
 
 ```
 POST /auth/logout
@@ -272,7 +318,7 @@ POST /auth/logout
 
 ---
 
-### 1.7. 회원가입 요청 목록 조회
+### 1.8. 회원가입 요청 목록 조회
 
 > 권한: ADMIN 이상
 
@@ -313,7 +359,7 @@ GET /auth/register-requests?status=PENDING&page=1&limit=20
 
 ---
 
-### 1.8. 회원가입 요청 처리 (승인/거절)
+### 1.9. 회원가입 요청 처리 (승인/거절)
 
 > 권한: ADMIN 이상
 
@@ -351,7 +397,7 @@ PATCH /auth/register-requests/:requestId
 
 ---
 
-### 1.9. 비밀번호 재설정 요청
+### 1.10. 비밀번호 재설정 요청
 
 ```
 POST /auth/password-reset-request
@@ -378,7 +424,7 @@ POST /auth/password-reset-request
 
 ---
 
-### 1.10. 비밀번호 재설정
+### 1.11. 비밀번호 재설정
 
 ```
 POST /auth/password-reset

@@ -3,6 +3,8 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 COPY pyproject.toml ./
-RUN pip install --upgrade pip && pip install --no-cache-dir -e ".[dev]"
+RUN pip install --upgrade pip "setuptools>=68" && \
+    mkdir -p app && \
+    pip install --no-cache-dir -e ".[dev]"
 # 소스는 볼륨으로 마운트 (docker-compose.dev.yml)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"]
