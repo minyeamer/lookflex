@@ -541,7 +541,7 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres re
 검증 방법 및 결과
 -----------------
   docker compose ps: lookflex-postgres (healthy), lookflex-redis (healthy),
-                     lookflex-backend (Up, no restart)
+                    lookflex-backend (Up, no restart)
   GET http://localhost:8000/api/v1/health → {"status":"ok","version":"0.1.0"}
   POST http://localhost:8000/api/v1/auth/register
     payload: {"email":"test@example.com","name":"Test User","password":"TestPass1!","requested_role":"EDITOR"}
@@ -554,3 +554,27 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres re
   1. feature/users 브랜치에서 Users / Groups API 구현
   2. apps/frontend/ Next.js 스캐폴딩
   3. SMTP 설정 후 실 이메일 발송 테스트
+
+================================================================================
+[2026-02-28] testing.md 오탈자 수정 — psql 접속 유저명
+================================================================================
+
+배경
+----
+docs/testing.md 작성 후 실제 psql 접속 시도 중 오류 발생:
+  psql: error: FATAL: role "lookflex" does not exist
+
+원인
+----
+.env 파일의 POSTGRES_USER 값은 lookflex_user인데,
+testing.md 전체에 걸쳐 -U lookflex 로 잘못 기재되어 있었다.
+총 6곳: 3.5절 DB 직접 삽입, 3.8절 DB 확인, 5절 DB 상태 직접 확인 (4개 쿼리).
+
+수정
+----
+  sed -i '' 's/-U lookflex -d lookflex/-U lookflex_user -d lookflex/g' docs/testing.md
+  → 6곳 일괄 수정
+
+재발 방지
+---------
+  접속 명령 작성 시 반드시 .env의 POSTGRES_USER 값(lookflex_user)을 참조할 것.

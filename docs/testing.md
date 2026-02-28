@@ -215,7 +215,7 @@ curl -s -X POST http://localhost:8000/api/v1/auth/resend-code \
 
 ```bash
 # postgres 컨테이너에 접속
-docker exec -it lookflex-postgres psql -U lookflex -d lookflex
+docker exec -it lookflex-postgres psql -U lookflex_user -d lookflex
 ```
 
 ```sql
@@ -352,7 +352,7 @@ curl -s -X PATCH http://localhost:8000/api/v1/auth/register-requests/$REQUEST_ID
 승인 후 users 테이블에 alice가 생성됐는지 확인:
 
 ```bash
-docker exec -it lookflex-postgres psql -U lookflex -d lookflex \
+docker exec -it lookflex-postgres psql -U lookflex_user -d lookflex \
   -c "SELECT id, email, role, is_active FROM users;"
 ```
 
@@ -470,18 +470,18 @@ curl -s http://localhost:8000/api/v1/auth/register-requests \
 
 ```bash
 # 모든 테이블 목록 확인 (22개)
-docker exec -it lookflex-postgres psql -U lookflex -d lookflex -c "\dt"
+docker exec -it lookflex-postgres psql -U lookflex_user -d lookflex -c "\dt"
 
 # users 목록
-docker exec -it lookflex-postgres psql -U lookflex -d lookflex \
+docker exec -it lookflex-postgres psql -U lookflex_user -d lookflex \
   -c "SELECT id, email, role, is_active FROM users;"
 
 # register_requests 목록
-docker exec -it lookflex-postgres psql -U lookflex -d lookflex \
+docker exec -it lookflex-postgres psql -U lookflex_user -d lookflex \
   -c "SELECT id, email, status FROM register_requests;"
 
 # Alembic 마이그레이션 히스토리
-docker exec -it lookflex-postgres psql -U lookflex -d lookflex \
+docker exec -it lookflex-postgres psql -U lookflex_user -d lookflex \
   -c "SELECT * FROM alembic_version;"
 ```
 
