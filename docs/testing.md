@@ -220,13 +220,13 @@ docker exec -it lookflex-postgres psql -U lookflex_user -d lookflex
 
 ```sql
 -- bcrypt 해시: "AdminPass1!" (rounds=12)
--- 아래 해시는 고정값 — 실제 사용 전 반드시 교체하세요
+-- 해시는 아래 명령으로 직접 생성한 값을 사용합니다 (생성 방법은 하단 참고)
 INSERT INTO users (id, email, name, hashed_password, role, is_active, email_verified_at, joined_at, updated_at)
 VALUES (
   gen_random_uuid(),
   'admin@example.com',
   'Admin',
-  '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQyCCpSHjzDGDanG8P3ZJYVcm',
+  '$2b$12$6HGYRNYAUR4TY2eQ9qajf.ziIcfA2tchDd6B5UjO/xsLlh3JSfy5C',
   'OWNER',
   true,
   now(),
@@ -239,10 +239,10 @@ SELECT id, email, role, is_active FROM users;
 \q
 ```
 
-> 비밀번호 해시를 직접 생성하려면:
+> 다른 비밀번호를 사용하려면 아래 명령으로 해시를 생성한 후 INSERT 값을 교체합니다:
 > ```bash
 > docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm --no-deps backend \
->   python -c "from app.core.security import hash_password; print(hash_password('AdminPass1!'))"
+>   python -c "from app.core.security import hash_password; print(hash_password('원하는비밀번호'))"
 > ```
 
 ---
@@ -266,9 +266,9 @@ curl -s -X POST http://localhost:8000/api/v1/auth/login \
 {
   "success": true,
   "data": {
-    "accessToken": "eyJ...",
-    "tokenType": "Bearer",
-    "expiresIn": 900
+    "access_token": "eyJ...",
+    "token_type": "Bearer",
+    "expires_in": 900
   },
   "error": null
 }
@@ -281,7 +281,7 @@ ACCESS_TOKEN=$(curl -s -X POST http://localhost:8000/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -c /tmp/lookflex_cookies.txt \
   -d '{"email":"admin@example.com","password":"AdminPass1!"}' \
-  | jq -r '.data.accessToken')
+  | jq -r '.data.access_token')
 
 echo $ACCESS_TOKEN
 ```
@@ -323,17 +323,17 @@ echo $REQUEST_ID
 ### 3.8. 회원가입 요청 승인 / 거절
 
 ```bash
-# 승인
+# 승인 (assigned_role 필수 — EDITOR 또는 VIEWER)
 curl -s -X PATCH http://localhost:8000/api/v1/auth/register-requests/$REQUEST_ID \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"action": "approve"}' | jq
+  -d '{"status": "APPROVED", "assigned_role": "EDITOR"}' | jq
 
 # 거절
 curl -s -X PATCH http://localhost:8000/api/v1/auth/register-requests/$REQUEST_ID \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"action": "reject", "reject_reason": "테스트 거절"}' | jq
+  -d '{"status": "REJECTED", "reject_reason": "테스트 거절"}' | jq
 ```
 
 승인 시 기대 응답 (`200`):
@@ -367,7 +367,7 @@ ALICE_TOKEN=$(curl -s -X POST http://localhost:8000/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -c /tmp/alice_cookies.txt \
   -d '{"email":"alice@example.com","password":"TestPass1!"}' \
-  | jq -r '.data.accessToken')
+  | jq -r '.data.access_token')
 
 echo $ALICE_TOKEN
 ```
