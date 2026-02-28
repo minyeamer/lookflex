@@ -438,43 +438,104 @@ api.md §1 Auth 전체 10개 엔드포인트를 구현했다.
 ----
 feature/auth 머지 후 "실제 Docker 환경에서 동작하는지 검증" 단계 진행.
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres redis backend
-실행 시 4가지 연쇄 오류 발생 → 차례로 수정.
+실행 시 4가지 연쇄 오류가 차례로 드러났다.
+각 오류는 이전 오류가 수정되어야 다음 오류가 보이는 구조여서, 총 4회 빌드/재시작을 반복했다.
+
+시행착오 상세
+-------------
+
+[오류 1] Docker 빌드 실패 — BackendUnavailable: Cannot import 'setuptools.backends.legacy'
+
+  발생 위치: Dockerfile.dev RUN 단계 (pip install -e ".[dev]")
+  원인: pyproject.toml에 build-backend = "setuptools.backends.legacy:build"로 작성했는데
+        이 경로는 setuptools에 실제로 존재하지 않는다.
+        setuptools 28.x 이하에는 legacy 모듈이 없었고, 최신 setuptools(68+)에서도
+        backends.legacy라는 서브패키지 경로는 없다.
+        올바른 경로는 "setuptools.build_meta"다.
+  수정: build-backend = "setuptools.build_meta"
+  부가 수정: Dockerfile.dev의 RUN 명령에서 pip install setuptools>=68이 쉘에서
+        >= 68로 해석될 가능성을 막기 위해 따옴표 추가: "setuptools>=68"
+        editable install (-e) 시 setuptools가 현재 디렉터리에서 소스를 스캔하는데,
+        Dockerfile 빌드 시점에 app/ 소스가 없으므로 mkdir -p app으로 stub 생성.
+
+[오류 2] Alembic 마이그레이션 실패 — DuplicateObjectError: type "role" already exists
+
+  발생 시점: 빌드 성공 후 컨테이너 첫 기동, alembic upgrade head 실행 중
+  증상: 처음 실행이었는데 왜 "이미 존재"라는 오류가 날까?
+  원인 분석 과정:
+    - 첫 기동에서 Alembic이 일부 DDL을 실행하다 오류로 중단
+    - DuplicateObjectError 발생 시 트랜잭션이 롤백되지만 alembic_version 테이블에는
+      기록이 남지 않아, 컨테이너 재시작마다 동일 마이그레이션을 재시도
+    - 재시도할 때 앞선 실행에서 partial하게 생성된 enum 타입이 남아 있어 duplicate 발생
+  원인 근본: postgresql.ENUM(...).create(op.get_bind(), checkfirst=True) 패턴이
+        asyncpg 환경에서 실제로 checkfirst 쿼리를 실행하지 않는다.
+        asyncpg는 sync wrapper (greenlet 기반) 위에서 작동하는데,
+        sqlalchemy가 checkfirst를 위해 내부적으로 SELECT가 필요한 시점에
+        sync context 밖에서 await을 시도해 오류 없이 무시되거나
+        단순히 CREATE TYPE을 실행해버린다.
+        결론: checkfirst=True가 asyncpg+alembic 조합에서 신뢰할 수 없다.
+
+  1차 수정 시도 (잘못된 접근):
+    op.create_table() 내부의 sa.Enum(...) 컬럼 정의에 create_type=False 추가.
+    → 이때 sa.Enum은 create_type 키워드를 받지 않는다는 사실을 몰랐음.
+      sa.Enum은 해당 파라미터를 조용히 무시(silently ignore)하므로 효과 없음.
+    → 실제로 create_type=False를 이해하는 것은 postgresql.ENUM()이다.
+
+  2차 수정 시도 (올바른 접근):
+    Enum 생성부를 _create_enum_if_not_exists() 헬퍼로 교체.
+    PL/pgSQL: DO $$ BEGIN CREATE TYPE ... EXCEPTION WHEN duplicate_object THEN null; END $$
+    → op.execute()로 원시 SQL을 직접 실행하므로 asyncpg wrapper 영향을 받지 않음.
+    → duplicate_object 예외를 DB 레벨에서 잡아 idempotent하게 동작.
+    op.create_table() 내부 sa.Enum() 전체를 postgresql.ENUM(create_type=False)으로 교체 (14개).
+
+  추가 교훈:
+    - sa.Enum과 postgresql.ENUM은 다르다.
+      sa.Enum: SQLAlchemy 크로스-DB 추상화 타입. create_type 파라미터 없음.
+      postgresql.ENUM: PostgreSQL 전용. create_type=False 지원.
+    - 향후 모든 마이그레이션에서 이 패턴을 유지한다.
+
+[오류 3] FastAPI 앱 시작 실패 — ImportError: email-validator is not installed
+
+  발생 시점: Alembic 성공 후 uvicorn 시작 시 스키마 클래스 로딩 단계
+  원인: pydantic v2에서 EmailStr 필드 타입을 사용하면 런타임에 email-validator 패키지가
+        필요하다. pyproject.toml에 pydantic만 선언하고 email-validator를 누락했음.
+  수정: pydantic[email]>=2.7.0, email-validator>=2.1.0 추가.
+
+[오류 4] bcrypt/passlib 버전 충돌 — ValueError: password cannot be longer than 72 bytes
+
+  발생 시점: /auth/register → hash_password() 호출 시 500 Internal Server Error
+  로그 패턴:
+    (trapped) error reading bcrypt version
+    AttributeError: module 'bcrypt' has no attribute '__about__'
+    ValueError: password cannot be longer than 72 bytes, truncate manually
+  원인: passlib 1.7.x는 bcrypt 3.x 기준으로 작성됨. bcrypt 4.0에서 __about__ 모듈이
+        제거됐고 내부 API가 바뀌어 passlib이 버전 감지에 실패하면서 ValueError를 던짐.
+        pip은 별도 제약 없이 bcrypt 최신 버전(4.x)을 설치했음.
+  수정: bcrypt>=3.2.0,<4.0.0 핀 추가.
+  참고: passlib 2.x 또는 bcrypt 호환 래퍼가 안정화되면 제약 해제 검토.
 
 수정한 파일
 -----------
   apps/backend/pyproject.toml
     - build-backend: "setuptools.backends.legacy:build" → "setuptools.build_meta"
-      (setuptools.backends.legacy is not a valid build backend; was silently
-       causing BackendUnavailable error during Docker image build)
     - 의존성 추가: "pydantic[email]>=2.7.0", "email-validator>=2.1.0"
-      (EmailStr 타입 사용 시 email-validator 패키지 필요)
     - 의존성 추가: "bcrypt>=3.2.0,<4.0.0"
-      (passlib 1.7.x는 bcrypt 4.x API와 비호환 — bcrypt.__about__ 미존재로
-       AttributeError, 그에 따른 password 72바이트 ValueError 연쇄 발생)
 
   apps/backend/Dockerfile.dev
-    - RUN 명령어 수정:
-      pip install --upgrade pip "setuptools>=68" && mkdir -p app && pip install -e ".[dev]"
-      이유: a) "setuptools>=68" 따옴표 없으면 쉘이 >=68을 구문으로 해석할 가능성 방지
-            b) mkdir -p app: editable install 시 setuptools가 소스 디렉터리를 탐색하므로
-               빌드 시점에 stub app/ 디렉터리 필요 (런타임엔 볼륨 마운트로 대체)
+    - RUN: pip install --upgrade pip "setuptools>=68" && mkdir -p app && pip install -e ".[dev]"
 
   apps/backend/alembic/versions/a1b2c3d4e5f6_initial_schema.py
-    - 문제 1: postgresql.ENUM(...).create(op.get_bind(), checkfirst=True) 방식이
-      asyncpg sync wrapper 환경에서 checkfirst=True 동작 불가 (실제로는 체크 없이
-      CREATE TYPE 실행 → DuplicateObjectError)
-    - 수정: _create_enum_if_not_exists() 헬퍼 함수 추가
-      → op.execute("DO $$ BEGIN CREATE TYPE ... EXCEPTION WHEN duplicate_object THEN null; END $$;")
-      PL/pgSQL 예외 처리 방식으로 idempotent 보장
-    - 문제 2: op.create_table() 내부 sa.Enum(..., create_type=False)에서
-      create_type 키워드가 sa.Enum에서는 무시됨 (유효한 파라미터가 아님)
-      → 모든 인라인 sa.Enum() → postgresql.ENUM(create_type=False)으로 교체 (14개)
+    - _create_enum_if_not_exists() 헬퍼 추가 (PL/pgSQL 방식)
+    - op.create_table() 내 sa.Enum() 14개 모두 postgresql.ENUM(create_type=False)으로 교체
+
+  infra/redis/redis.conf
+    - requirepass devredis123 설정
 
 설계 결정 사항
 --------------
   Enum 생성 원칙: op.create_table() 내 열 정의에서는 postgresql.ENUM(create_type=False),
     별도 _create_enum_if_not_exists() 함수로 PL/pgSQL 방식 선행 생성.
-    → 향후 마이그레이션 추가 시에도 동일 패턴 사용.
+    향후 마이그레이션 추가 시에도 동일 패턴 사용.
   bcrypt 버전 고정: <4.0.0 — passlib 2.x 출시 또는 bcrypt 호환 래퍼 도입 전까지 유지.
 
 검증 방법 및 결과
