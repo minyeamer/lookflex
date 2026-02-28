@@ -19,6 +19,7 @@ from app.schemas.auth import (
     RegisterRequest,
     RegisterResponse,
     ResendCodeRequest,
+    SendVerificationRequest,
     TokenResponse,
     VerifyEmailRequest,
     RegisterRequestItem,
@@ -48,6 +49,14 @@ def _clear_refresh_cookie(response: Response) -> None:
 
 
 # ── 회원가입 ──────────────────────────────────────────────────────────────────
+@router.post("/send-verification", response_model=ApiResponse[MessageResponse])
+async def send_verification(
+    body: SendVerificationRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+):
+    """1단계: 이메일만 입력해 OTP 요청. DB 기록 없음."""
+    data = await AuthService(db).send_verification(body.email)
+    return ApiResponse.ok(data)
 
 @router.post("/register", response_model=ApiResponse[RegisterResponse], status_code=201)
 async def register(

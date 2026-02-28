@@ -40,7 +40,7 @@ def _send_sync(to: str, subject: str, body_html: str) -> None:
 
 # ── 템플릿 ────────────────────────────────────────────────────────────────────
 
-async def send_otp_email(to: str, name: str, code: str) -> None:
+async def send_otp_email(to: str, code: str, name: str = "사용자") -> None:
     subject = "[LookFlex] 이메일 인증 코드"
     body = f"""
     <p>안녕하세요, {name}님.</p>
