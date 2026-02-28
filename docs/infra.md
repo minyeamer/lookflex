@@ -416,7 +416,7 @@ services:
 
   redis:
     ports:
-      - "6379:6379"          # 로컬에서 Redis CLI 직접 접근 가능
+      - "${REDIS_PORT:-6380}:6379"   # 로컬에서 Redis CLI 직접 접근 가능
 
   backend:
     build:

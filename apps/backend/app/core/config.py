@@ -1,3 +1,4 @@
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -7,8 +8,19 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://lookflex_user:password@localhost:5432/lookflex"
 
-    # Redis
-    REDIS_URL: str = "redis://:password@localhost:6379/0"
+    # Redis — Docker는 REDIS_URL을 직접 주입, 로컬은 컴포넌트에서 조합
+    REDIS_URL: str = ""
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_PASSWORD: str = ""
+    REDIS_DB: int = 0
+
+    @model_validator(mode="after")
+    def build_redis_url(self) -> "Settings":
+        if not self.REDIS_URL:
+            auth = f":{self.REDIS_PASSWORD}@" if self.REDIS_PASSWORD else "@"
+            self.REDIS_URL = f"redis://{auth}{self.REDIS_HOST}:{self.REDIS_PORT}/{self.REDIS_DB}"
+        return self
 
     # JWT
     SECRET_KEY: str = "change-me-in-production"
