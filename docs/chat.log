@@ -430,3 +430,66 @@ api.md §1 Auth 전체 10개 엔드포인트를 구현했다.
   1. PR: feature/auth → dev 머지
   2. feature/users 브랜치에서 Users API 구현
   3. apps/frontend/ Next.js 스캐폴딩
+================================================================================
+[2026-02-28] Docker 실동작 검증 및 빌드 버그 수정
+================================================================================
+
+배경
+----
+feature/auth 머지 후 "실제 Docker 환경에서 동작하는지 검증" 단계 진행.
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres redis backend
+실행 시 4가지 연쇄 오류 발생 → 차례로 수정.
+
+수정한 파일
+-----------
+  apps/backend/pyproject.toml
+    - build-backend: "setuptools.backends.legacy:build" → "setuptools.build_meta"
+      (setuptools.backends.legacy is not a valid build backend; was silently
+       causing BackendUnavailable error during Docker image build)
+    - 의존성 추가: "pydantic[email]>=2.7.0", "email-validator>=2.1.0"
+      (EmailStr 타입 사용 시 email-validator 패키지 필요)
+    - 의존성 추가: "bcrypt>=3.2.0,<4.0.0"
+      (passlib 1.7.x는 bcrypt 4.x API와 비호환 — bcrypt.__about__ 미존재로
+       AttributeError, 그에 따른 password 72바이트 ValueError 연쇄 발생)
+
+  apps/backend/Dockerfile.dev
+    - RUN 명령어 수정:
+      pip install --upgrade pip "setuptools>=68" && mkdir -p app && pip install -e ".[dev]"
+      이유: a) "setuptools>=68" 따옴표 없으면 쉘이 >=68을 구문으로 해석할 가능성 방지
+            b) mkdir -p app: editable install 시 setuptools가 소스 디렉터리를 탐색하므로
+               빌드 시점에 stub app/ 디렉터리 필요 (런타임엔 볼륨 마운트로 대체)
+
+  apps/backend/alembic/versions/a1b2c3d4e5f6_initial_schema.py
+    - 문제 1: postgresql.ENUM(...).create(op.get_bind(), checkfirst=True) 방식이
+      asyncpg sync wrapper 환경에서 checkfirst=True 동작 불가 (실제로는 체크 없이
+      CREATE TYPE 실행 → DuplicateObjectError)
+    - 수정: _create_enum_if_not_exists() 헬퍼 함수 추가
+      → op.execute("DO $$ BEGIN CREATE TYPE ... EXCEPTION WHEN duplicate_object THEN null; END $$;")
+      PL/pgSQL 예외 처리 방식으로 idempotent 보장
+    - 문제 2: op.create_table() 내부 sa.Enum(..., create_type=False)에서
+      create_type 키워드가 sa.Enum에서는 무시됨 (유효한 파라미터가 아님)
+      → 모든 인라인 sa.Enum() → postgresql.ENUM(create_type=False)으로 교체 (14개)
+
+설계 결정 사항
+--------------
+  Enum 생성 원칙: op.create_table() 내 열 정의에서는 postgresql.ENUM(create_type=False),
+    별도 _create_enum_if_not_exists() 함수로 PL/pgSQL 방식 선행 생성.
+    → 향후 마이그레이션 추가 시에도 동일 패턴 사용.
+  bcrypt 버전 고정: <4.0.0 — passlib 2.x 출시 또는 bcrypt 호환 래퍼 도입 전까지 유지.
+
+검증 방법 및 결과
+-----------------
+  docker compose ps: lookflex-postgres (healthy), lookflex-redis (healthy),
+                     lookflex-backend (Up, no restart)
+  GET http://localhost:8000/api/v1/health → {"status":"ok","version":"0.1.0"}
+  POST http://localhost:8000/api/v1/auth/register
+    payload: {"email":"test@example.com","name":"Test User","password":"TestPass1!","requested_role":"EDITOR"}
+    response: {"success":true,"data":{"message":"이메일 인증 코드가 발송되었습니다.","email":"test@example.com"},"error":null}
+  컨테이너 로그: [EMAIL - SMTP 미설정] to=test@example.com | subject=[LookFlex] 이메일 인증 코드
+    → SMTP 미설정 시 콘솔 로그 폴백 정상 동작 확인
+
+다음 단계 (예정)
+----------------
+  1. feature/users 브랜치에서 Users / Groups API 구현
+  2. apps/frontend/ Next.js 스캐폴딩
+  3. SMTP 설정 후 실 이메일 발송 테스트

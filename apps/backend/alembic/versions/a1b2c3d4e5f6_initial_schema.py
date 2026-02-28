@@ -18,77 +18,48 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+def _create_enum_if_not_exists(name: str, *values: str) -> None:
+    """PL/pgSQL을 사용해 이미 존재하는 enum 타입을 안전하게 생성합니다 (asyncpg 호환)."""
+    vals = ", ".join(f"'{v}'" for v in values)
+    op.execute(
+        f"DO $$ BEGIN "
+        f"CREATE TYPE {name} AS ENUM ({vals}); "
+        f"EXCEPTION WHEN duplicate_object THEN null; "
+        f"END $$;"
+    )
+
+
 def upgrade() -> None:
-    # ── Enum Types ────────────────────────────────────────────────────────────
-    role_enum = postgresql.ENUM(
-        "OWNER", "ADMIN", "EDITOR", "VIEWER", name="role", create_type=False
+    # ── Enum Types (PL/pgSQL로 idempotent하게 생성) ───────────────────────────
+    _create_enum_if_not_exists("role", "OWNER", "ADMIN", "EDITOR", "VIEWER")
+    _create_enum_if_not_exists("approvalstatus", "PENDING", "APPROVED", "REJECTED")
+    _create_enum_if_not_exists("grouptype", "DEPARTMENT", "POSITION", "CUSTOM")
+    _create_enum_if_not_exists(
+        "dssourcetype", "POSTGRESQL", "MYSQL", "MSSQL", "BIGQUERY", "EXCEL", "CSV"
     )
-    role_enum.create(op.get_bind(), checkfirst=True)
-
-    approval_status_enum = postgresql.ENUM(
-        "PENDING", "APPROVED", "REJECTED", name="approvalstatus", create_type=False
+    _create_enum_if_not_exists("fieldtype", "TEXT", "NUMBER", "DATE", "DATETIME", "BOOLEAN")
+    _create_enum_if_not_exists(
+        "aggregatetype", "SUM", "AVG", "MIN", "MAX", "COUNT", "COUNT_DISTINCT", "NONE"
     )
-    approval_status_enum.create(op.get_bind(), checkfirst=True)
-
-    group_type_enum = postgresql.ENUM(
-        "DEPARTMENT", "POSITION", "CUSTOM", name="grouptype", create_type=False
+    _create_enum_if_not_exists(
+        "charttype", "TABLE", "PIVOT", "LINE", "BAR", "STACKED_BAR", "PIE", "SCORECARD"
     )
-    group_type_enum.create(op.get_bind(), checkfirst=True)
-
-    ds_source_type_enum = postgresql.ENUM(
-        "POSTGRESQL", "MYSQL", "MSSQL", "BIGQUERY", "EXCEL", "CSV",
-        name="dssourcetype", create_type=False
-    )
-    ds_source_type_enum.create(op.get_bind(), checkfirst=True)
-
-    field_type_enum = postgresql.ENUM(
-        "TEXT", "NUMBER", "DATE", "DATETIME", "BOOLEAN",
-        name="fieldtype", create_type=False
-    )
-    field_type_enum.create(op.get_bind(), checkfirst=True)
-
-    aggregate_type_enum = postgresql.ENUM(
-        "SUM", "AVG", "MIN", "MAX", "COUNT", "COUNT_DISTINCT", "NONE",
-        name="aggregatetype", create_type=False
-    )
-    aggregate_type_enum.create(op.get_bind(), checkfirst=True)
-
-    chart_type_enum = postgresql.ENUM(
-        "TABLE", "PIVOT", "LINE", "BAR", "STACKED_BAR", "PIE", "SCORECARD",
-        name="charttype", create_type=False
-    )
-    chart_type_enum.create(op.get_bind(), checkfirst=True)
-
-    filter_type_enum = postgresql.ENUM(
-        "DROPDOWN", "TEXT_INPUT", "RANGE", "DATE_RANGE",
-        name="filtertype", create_type=False
-    )
-    filter_type_enum.create(op.get_bind(), checkfirst=True)
-
-    filter_op_enum = postgresql.ENUM(
+    _create_enum_if_not_exists("filtertype", "DROPDOWN", "TEXT_INPUT", "RANGE", "DATE_RANGE")
+    _create_enum_if_not_exists(
+        "filterop",
         "EQ", "NEQ", "CONTAINS", "NOT_CONTAINS", "STARTS_WITH", "ENDS_WITH",
         "REGEX", "GT", "GTE", "LT", "LTE", "BETWEEN", "IS_NULL", "IS_NOT_NULL",
-        name="filterop", create_type=False
     )
-    filter_op_enum.create(op.get_bind(), checkfirst=True)
-
-    cond_format_apply_to_enum = postgresql.ENUM(
-        "CELL", "ROW", name="condformatapplyto", create_type=False
-    )
-    cond_format_apply_to_enum.create(op.get_bind(), checkfirst=True)
-
-    notification_type_enum = postgresql.ENUM(
+    _create_enum_if_not_exists("condformatapplyto", "CELL", "ROW")
+    _create_enum_if_not_exists(
+        "notificationtype",
         "REGISTER_REQUEST", "REGISTER_APPROVED", "REGISTER_REJECTED",
-        name="notificationtype", create_type=False
     )
-    notification_type_enum.create(op.get_bind(), checkfirst=True)
-
-    audit_action_enum = postgresql.ENUM(
+    _create_enum_if_not_exists(
+        "auditaction",
         "LOGIN", "LOGOUT", "DATA_QUERY", "EXPORT",
         "DASHBOARD_EDIT", "DATASOURCE_EDIT", "USER_EDIT",
-        name="auditaction", create_type=False
     )
-    audit_action_enum.create(op.get_bind(), checkfirst=True)
 
     # ── users ─────────────────────────────────────────────────────────────────
     op.create_table(
@@ -97,7 +68,7 @@ def upgrade() -> None:
         sa.Column("email", sa.String(254), nullable=False),
         sa.Column("name", sa.String(100), nullable=False),
         sa.Column("hashed_password", sa.String(255), nullable=False),
-        sa.Column("role", sa.Enum("OWNER", "ADMIN", "EDITOR", "VIEWER", name="role"), nullable=False),
+        sa.Column("role", postgresql.ENUM("OWNER", "ADMIN", "EDITOR", "VIEWER", name="role", create_type=False), nullable=False),
         sa.Column("profile_image_url", sa.String(500), nullable=True),
         sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column("email_verified_at", sa.DateTime(timezone=True), nullable=True),
@@ -111,7 +82,7 @@ def upgrade() -> None:
         "groups",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
         sa.Column("name", sa.String(100), nullable=False),
-        sa.Column("type", sa.Enum("DEPARTMENT", "POSITION", "CUSTOM", name="grouptype"), nullable=False),
+        sa.Column("type", postgresql.ENUM("DEPARTMENT", "POSITION", "CUSTOM", name="grouptype", create_type=False), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False),
@@ -132,10 +103,10 @@ def upgrade() -> None:
         sa.Column("email", sa.String(254), nullable=False),
         sa.Column("name", sa.String(100), nullable=False),
         sa.Column("hashed_password", sa.String(255), nullable=False),
-        sa.Column("requested_role", sa.Enum("OWNER", "ADMIN", "EDITOR", "VIEWER", name="role"), nullable=False),
+        sa.Column("requested_role", postgresql.ENUM("OWNER", "ADMIN", "EDITOR", "VIEWER", name="role", create_type=False), nullable=False),
         sa.Column(
             "status",
-            sa.Enum("PENDING", "APPROVED", "REJECTED", name="approvalstatus"),
+            postgresql.ENUM("PENDING", "APPROVED", "REJECTED", name="approvalstatus", create_type=False),
             nullable=False,
             server_default="PENDING",
         ),
@@ -203,7 +174,7 @@ def upgrade() -> None:
         sa.Column("source_id", sa.String(100), nullable=False),
         sa.Column(
             "source_type",
-            sa.Enum("POSTGRESQL", "MYSQL", "MSSQL", "BIGQUERY", "EXCEL", "CSV", name="dssourcetype"),
+            postgresql.ENUM("POSTGRESQL", "MYSQL", "MSSQL", "BIGQUERY", "EXCEL", "CSV", name="dssourcetype", create_type=False),
             nullable=False,
         ),
         sa.Column("description", sa.Text(), nullable=True),
@@ -223,10 +194,10 @@ def upgrade() -> None:
         sa.Column("datasource_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("datasources.id", ondelete="CASCADE"), nullable=False),
         sa.Column("field_id", sa.String(200), nullable=False),
         sa.Column("label", sa.String(200), nullable=False),
-        sa.Column("type", sa.Enum("TEXT", "NUMBER", "DATE", "DATETIME", "BOOLEAN", name="fieldtype"), nullable=False),
+        sa.Column("type", postgresql.ENUM("TEXT", "NUMBER", "DATE", "DATETIME", "BOOLEAN", name="fieldtype", create_type=False), nullable=False),
         sa.Column(
             "default_aggregate",
-            sa.Enum("SUM", "AVG", "MIN", "MAX", "COUNT", "COUNT_DISTINCT", "NONE", name="aggregatetype"),
+            postgresql.ENUM("SUM", "AVG", "MIN", "MAX", "COUNT", "COUNT_DISTINCT", "NONE", name="aggregatetype", create_type=False),
             nullable=False,
             server_default="NONE",
         ),
@@ -257,7 +228,7 @@ def upgrade() -> None:
         sa.Column("datasource_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("datasources.id", ondelete="SET NULL"), nullable=True),
         sa.Column(
             "type",
-            sa.Enum("TABLE", "PIVOT", "LINE", "BAR", "STACKED_BAR", "PIE", "SCORECARD", name="charttype"),
+            postgresql.ENUM("TABLE", "PIVOT", "LINE", "BAR", "STACKED_BAR", "PIE", "SCORECARD", name="charttype", create_type=False),
             nullable=False,
         ),
         sa.Column("title", sa.String(300), nullable=False, server_default=sa.text("''")),
@@ -298,7 +269,7 @@ def upgrade() -> None:
         sa.Column("field_id", sa.String(200), nullable=True),
         sa.Column(
             "type",
-            sa.Enum("DROPDOWN", "TEXT_INPUT", "RANGE", "DATE_RANGE", name="filtertype"),
+            postgresql.ENUM("DROPDOWN", "TEXT_INPUT", "RANGE", "DATE_RANGE", name="filtertype", create_type=False),
             nullable=False,
         ),
         sa.Column("title", sa.String(200), nullable=False),
@@ -322,10 +293,10 @@ def upgrade() -> None:
         sa.Column("field_id", sa.String(200), nullable=False),
         sa.Column(
             "operator",
-            sa.Enum(
+            postgresql.ENUM(
                 "EQ", "NEQ", "CONTAINS", "NOT_CONTAINS", "STARTS_WITH", "ENDS_WITH",
                 "REGEX", "GT", "GTE", "LT", "LTE", "BETWEEN", "IS_NULL", "IS_NOT_NULL",
-                name="filterop",
+                name="filterop", create_type=False,
             ),
             nullable=False,
         ),
@@ -342,7 +313,7 @@ def upgrade() -> None:
         sa.Column("order", sa.Integer(), nullable=False, server_default=sa.text("0")),
         sa.Column(
             "apply_to",
-            sa.Enum("CELL", "ROW", name="condformatapplyto"),
+            postgresql.ENUM("CELL", "ROW", name="condformatapplyto", create_type=False),
             nullable=False,
             server_default="CELL",
         ),
@@ -360,10 +331,10 @@ def upgrade() -> None:
         sa.Column("order", sa.Integer(), nullable=False, server_default=sa.text("0")),
         sa.Column(
             "operator",
-            sa.Enum(
+            postgresql.ENUM(
                 "EQ", "NEQ", "CONTAINS", "NOT_CONTAINS", "STARTS_WITH", "ENDS_WITH",
                 "REGEX", "GT", "GTE", "LT", "LTE", "BETWEEN", "IS_NULL", "IS_NOT_NULL",
-                name="filterop",
+                name="filterop", create_type=False,
             ),
             nullable=False,
         ),
@@ -393,9 +364,9 @@ def upgrade() -> None:
         sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
         sa.Column(
             "type",
-            sa.Enum(
+            postgresql.ENUM(
                 "REGISTER_REQUEST", "REGISTER_APPROVED", "REGISTER_REJECTED",
-                name="notificationtype",
+                name="notificationtype", create_type=False,
             ),
             nullable=False,
         ),
@@ -430,10 +401,10 @@ def upgrade() -> None:
         sa.Column("user_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("users.id", ondelete="SET NULL"), nullable=True),
         sa.Column(
             "action",
-            sa.Enum(
+            postgresql.ENUM(
                 "LOGIN", "LOGOUT", "DATA_QUERY", "EXPORT",
                 "DASHBOARD_EDIT", "DATASOURCE_EDIT", "USER_EDIT",
-                name="auditaction",
+                name="auditaction", create_type=False,
             ),
             nullable=False,
         ),
