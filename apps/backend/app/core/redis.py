@@ -35,6 +35,11 @@ def otp_key(email: str) -> str:
     return f"otp:{email}"
 
 
+def email_verified_key(email: str) -> str:
+    """이메일 인증 완료 여부 (회원가입 제출 전 30분 유효)"""
+    return f"email_verified:{email}"
+
+
 def pw_reset_key(token: str) -> str:
     return f"pw_reset:{token}"
 

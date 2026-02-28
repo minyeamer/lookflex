@@ -8,6 +8,12 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 from app.db.models.enums import ApprovalStatus, Role
 
 
+# ── 이메일 인증 (회원가입 이전 단계) ─────────────────────────────────────────
+
+class SendVerificationRequest(BaseModel):
+    email: EmailStr
+
+
 # ── 회원가입 ──────────────────────────────────────────────────────────────────
 
 class RegisterRequest(BaseModel):

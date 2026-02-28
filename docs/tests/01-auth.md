@@ -71,7 +71,7 @@ curl -s http://localhost:8000/api/v1/health | jq
 기대 응답:
 
 ```json
-{"status": "ok", "version": "0.1.0"}
+{"status": "ok", "version": "0.1.1"}
 ```
 
 Swagger UI: http://localhost:8000/api/docs
@@ -80,29 +80,28 @@ Swagger UI: http://localhost:8000/api/docs
 
 ## 3. Auth API 전수 테스트
 
-테스트는 순서대로 진행합니다. 각 단계의 응답값을 다음 단계에서 사용합니다.
+테스트는 순서대로 진행합니다. 단계별 응답값을 다음 단계에서 사용합니다.
 
-### 3.1. 회원가입 요청
+> **회원가입 플로우 (UI 기준)**
+> `send-verification` → `verify-email` → `register` 순서로 진행합니다.
+
+---
+
+### 3.1. 이메일 인증 코드 발송
 
 ```bash
-curl -s -X POST http://localhost:8000/api/v1/auth/register \
+curl -s -X POST http://localhost:8000/api/v1/auth/send-verification \
   -H "Content-Type: application/json" \
-  -d '{
-    "email": "alice@example.com",
-    "name": "Alice",
-    "password": "TestPass1!",
-    "requested_role": "EDITOR"
-  }' | jq
+  -d '{"email": "alice@example.com"}' | jq
 ```
 
-기대 응답 (`201`):
+기대 응답 (`200`):
 
 ```json
 {
   "success": true,
   "data": {
-    "message": "이메일 인증 코드가 발송되었습니다.",
-    "email": "alice@example.com"
+    "message": "인증 코드가 발송되었습니다."
   },
   "error": null
 }
@@ -112,7 +111,7 @@ curl -s -X POST http://localhost:8000/api/v1/auth/register \
 
 | 재현 방법 | 기대 응답 |
 |---|---|
-| 동일 이메일로 `/register` 재호출 | `409 EMAIL_ALREADY_EXISTS` 또는 `REGISTER_REQUEST_PENDING` |
+| 이미 가입된 이메일 | `409 EMAIL_ALREADY_EXISTS` |
 
 ---
 
@@ -163,6 +162,7 @@ TTL otp:alice@example.com
 ### 3.3. 이메일 인증
 
 위에서 얻은 코드를 사용합니다.
+인증 성공 시 **DB 변경 없음** — Redis에 `email_verified:{email}` 플래그 30분 저장.
 
 ```bash
 CODE=483921  # 실제 코드로 교체
@@ -181,7 +181,7 @@ curl -s -X POST http://localhost:8000/api/v1/auth/verify-email \
 {
   "success": true,
   "data": {
-    "message": "이메일 인증이 완료되었습니다. 관리자 승인을 기다려주세요."
+    "message": "이메일 인증이 완료되었습니다. 회원가입을 이어서 진행해주세요."
   },
   "error": null
 }
@@ -208,7 +208,46 @@ curl -s -X POST http://localhost:8000/api/v1/auth/resend-code \
 
 ---
 
-### 3.5. 초기 OWNER 계정 생성 (DB 직접 삽입)
+### 3.5. 회원가입 요청
+
+3.3 이메일 인증 완료 후 나머지 정보를 제출합니다.
+Redis에 인증 완료 플래그가 없으면 `403 EMAIL_NOT_VERIFIED` 반환.
+승인 시 `email_verified_at`이 이미 기록된 상태로 RegisterRequest 생성됩니다.
+
+```bash
+curl -s -X POST http://localhost:8000/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "alice@example.com",
+    "name": "Alice",
+    "password": "TestPass1!",
+    "requested_role": "EDITOR"
+  }' | jq
+```
+
+기대 응답 (`201`):
+
+```json
+{
+  "success": true,
+  "data": {
+    "message": "회원가입 요청이 완료되었습니다. 관리자 승인을 기다려주세요.",
+    "email": "alice@example.com"
+  },
+  "error": null
+}
+```
+
+오류 케이스:
+
+| 재현 방법 | 기대 응답 |
+|---|---|
+| 3.3 인증 전 `/register` 호웄 | `403 EMAIL_NOT_VERIFIED` |
+| 동일 이메일로 `/register` 재호출 | `409 EMAIL_ALREADY_EXISTS` 또는 `REGISTER_REQUEST_PENDING` |
+
+---
+
+### 3.6. 초기 OWNER 계정 생성 (DB 직접 삽입)
 
 가입 승인 테스트를 위해 ADMIN/OWNER 계정이 필요합니다.
 첫 번째 관리자는 닭-달걀 문제로 DB에 직접 삽입합니다.
@@ -247,7 +286,7 @@ SELECT id, email, role, is_active FROM users;
 
 ---
 
-### 3.6. 로그인
+### 3.7. 로그인
 
 ```bash
 # OWNER 계정으로 로그인 (쿠키를 파일에 저장)
@@ -296,7 +335,7 @@ echo $ACCESS_TOKEN
 
 ---
 
-### 3.7. 회원가입 요청 목록 조회 (ADMIN 전용)
+### 3.8. 회원가입 요청 목록 조회 (ADMIN 전용)
 
 ```bash
 curl -s http://localhost:8000/api/v1/auth/register-requests \
@@ -320,7 +359,7 @@ echo $REQUEST_ID
 
 ---
 
-### 3.8. 회원가입 요청 승인 / 거절
+### 3.9. 회원가입 요청 승인 / 거절
 
 ```bash
 # 승인 (assigned_role 필수 — EDITOR 또는 VIEWER)
@@ -358,7 +397,7 @@ docker exec -it lookflex-postgres psql -U lookflex_user -d lookflex \
 
 ---
 
-### 3.9. alice로 로그인
+### 3.10. alice로 로그인
 
 3.8 승인 후 alice 계정으로 로그인합니다.
 
@@ -374,7 +413,7 @@ echo $ALICE_TOKEN
 
 ---
 
-### 3.10. 토큰 갱신
+### 3.11. 토큰 갱신
 
 로그인 시 저장된 쿠키를 사용합니다.
 
@@ -383,11 +422,11 @@ curl -s -X POST http://localhost:8000/api/v1/auth/refresh \
   -b /tmp/lookflex_cookies.txt | jq
 ```
 
-기대 응답 (`200`): 새 `accessToken` 반환.
+기대 응답 (`200`): 새 `access_token` 반환.
 
 ---
 
-### 3.11. 비밀번호 재설정 요청
+### 3.12. 비밀번호 재설정 요청
 
 ```bash
 curl -s -X POST http://localhost:8000/api/v1/auth/password-reset-request \
@@ -408,7 +447,7 @@ docker exec -it lookflex-redis redis-cli -a devredis123 KEYS "pw_reset:*"
 
 ---
 
-### 3.12. 비밀번호 재설정
+### 3.13. 비밀번호 재설정
 
 로그에서 URL의 `token=` 파라미터 값을 추출합니다 (예: `abc123def456...`).
 
@@ -427,7 +466,7 @@ curl -s -X POST http://localhost:8000/api/v1/auth/password-reset \
 
 ---
 
-### 3.13. 로그아웃
+### 3.14. 로그아웃
 
 ```bash
 curl -s -X POST http://localhost:8000/api/v1/auth/logout \
