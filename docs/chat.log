@@ -1,4 +1,4 @@
-LookFlex 의사결정 로그
+Flooks 의사결정 로그
 프로젝트 진행 과정에서 내려진 주요 결정들을 시간순으로 기록합니다.
 
 ================================================================================
@@ -540,13 +540,13 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres re
 
 검증 방법 및 결과
 -----------------
-  docker compose ps: lookflex-postgres (healthy), lookflex-redis (healthy),
-                    lookflex-backend (Up, no restart)
+  docker compose ps: flooks-postgres (healthy), flooks-redis (healthy),
+                    flooks-backend (Up, no restart)
   GET http://localhost:8000/api/v1/health → {"status":"ok","version":"0.1.0"}
   POST http://localhost:8000/api/v1/auth/register
     payload: {"email":"test@example.com","name":"Test User","password":"TestPass1!","requested_role":"EDITOR"}
     response: {"success":true,"data":{"message":"이메일 인증 코드가 발송되었습니다.","email":"test@example.com"},"error":null}
-  컨테이너 로그: [EMAIL - SMTP 미설정] to=test@example.com | subject=[LookFlex] 이메일 인증 코드
+  컨테이너 로그: [EMAIL - SMTP 미설정] to=test@example.com | subject=[Flooks] 이메일 인증 코드
     → SMTP 미설정 시 콘솔 로그 폴백 정상 동작 확인
 
 다음 단계 (예정)
@@ -562,22 +562,22 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres re
 배경
 ----
 docs/testing.md 작성 후 실제 psql 접속 시도 중 오류 발생:
-  psql: error: FATAL: role "lookflex" does not exist
+  psql: error: FATAL: role "flooks" does not exist
 
 원인
 ----
-.env 파일의 POSTGRES_USER 값은 lookflex_user인데,
-testing.md 전체에 걸쳐 -U lookflex 로 잘못 기재되어 있었다.
+.env 파일의 POSTGRES_USER 값은 flooks_user인데,
+testing.md 전체에 걸쳐 -U flooks 로 잘못 기재되어 있었다.
 총 6곳: 3.5절 DB 직접 삽입, 3.8절 DB 확인, 5절 DB 상태 직접 확인 (4개 쿼리).
 
 수정
 ----
-  sed -i '' 's/-U lookflex -d lookflex/-U lookflex_user -d lookflex/g' docs/testing.md
+  sed -i '' 's/-U flooks -d flooks/-U flooks_user -d flooks/g' docs/testing.md
   → 6곳 일괄 수정
 
 재발 방지
 ---------
-  접속 명령 작성 시 반드시 .env의 POSTGRES_USER 값(lookflex_user)을 참조할 것.
+  접속 명령 작성 시 반드시 .env의 POSTGRES_USER 값(flooks_user)을 참조할 것.
 
 ================================================================================
 [2026-03-01] Auth 플로우 UI 중심 재설계 및 가이드라인 정비
@@ -676,3 +676,186 @@ OTP가 발송됐는데, 이는 UI 흐름과 반대다.
   컨테이너 내부 Redis 포트는 항상 6379 (redis.conf port 설정 없음).
   호스트 노출 포트는 .env의 REDIS_PORT 또는 docker-compose 기본값으로 제어.
   .env.example에는 포트 값을 직접 명시하지 않음 (docker-compose 기본값으로 충분).
+
+================================================================================
+[2026-03-01] API 문서 대폭 개편 (docs/api.md)
+================================================================================
+
+배경
+----
+api.md가 초안 상태로 남아 있어 실제 구현 시 참고하기 불편했다.
+enum 정의, 에러 코드 목록, 필드 상세 설명이 부족하고, snake_case/camelCase 혼용으로
+일관성이 떨어졌다.
+
+변경 사항
+---------
+1. Enum 정의 테이블 추가 (api.md 상단)
+  - Role, ApprovalStatus, GroupType, DSSourceType, FieldType, AggregateType
+  - ChartType, FilterType, FilterOp, SortDir, CondFormatApplyTo
+  - NotificationType, AuditAction
+  - 각 enum 값마다 설명 추가
+
+2. 에러 코드 테이블 신규 추가
+  - 전체 에러 코드 목록 (EMAIL_ALREADY_EXISTS, INVALID_CODE, CODE_EXPIRED 등)
+  - HTTP 상태 코드와 설명 매핑
+
+3. 필드 상세 테이블 추가
+  - 각 엔드포인트의 Request Body, Response 필드마다 타입·필수 여부·설명 명시
+  - 예: Auth 엔드포인트 — email, password, code, name, requested_role 등
+
+4. snake_case 일관성 적용
+  - 모든 JSON 필드명 snake_case로 통일 (requestedRole → requested_role)
+  - camelCase 흔적 제거
+
+5. 응답 envelope 구조 명확화
+  - success, data, error 필드 상세 설명
+  - 성공/실패 응답 예시 추가
+
+수정된 섹션
+-----------
+  - 공통 규격: Enum 정의, 에러 코드, 페이지네이션
+  - Auth (§1): 필드 테이블 추가, snake_case 적용
+  - Users (§2): 필드 테이블 추가
+  - 나머지 섹션 (§3~§13): 필드 상세 설명 추가
+
+설계 결정 사항
+--------------
+  - Enum은 api.md 상단에 일괄 정의 (중복 제거)
+  - 에러 코드는 전체 목록을 별도 테이블로 관리 (코드·HTTP 상태·설명)
+  - 필드 테이블은 각 엔드포인트마다 Request Body와 Response로 구분
+  - snake_case 원칙 확정 (Python/FastAPI 관례 준수)
+
+영향
+----
+  - 총 2679 줄 (기존 대비 약 500줄 증가)
+  - Enum 테이블: 약 100줄
+  - 에러 코드 테이블: 약 50줄
+  - 필드 테이블: 각 엔드포인트당 10~30줄 추가
+
+브랜치
+------
+  - feature/auth (이미 머지됨)
+  - dev → main 동기화 완료 (0.1.1)
+
+다음 단계 (예정)
+----------------
+  - Users API (§2) 구현
+  - Groups API (§3) 구현
+  - Dashboards & Pages API (§4) 기본 CRUD 구현
+
+================================================================================
+[2026-03-01] Users API 구현 (§2, 9개 엔드포인트)
+            (feat(backend): implement Users API)
+================================================================================
+
+작업 내용
+---------
+api.md §2 Users 전체 9개 엔드포인트를 구현했다.
+브랜치: feature/users (dev 기준)
+
+생성된 파일 목록
+----------------
+  apps/backend/app/api/v1/users.py — 9개 라우트
+  apps/backend/app/services/user_service.py — 비즈니스 로직
+  docs/tests/02-users.md — 테스트 가이드 (540줄)
+
+수정된 파일
+-----------
+  apps/backend/app/schemas/user.py
+    - ProfileUpdateRequest, PasswordChangeRequest 추가
+    - UserListItem, UserRoleUpdate, UserProfileUpdate 추가
+    - UserRoleUpdateBulkRequest, UserProfileUpdateBulkRequest 추가
+    - field_validator로 OWNER 역할 부여 차단
+
+  apps/backend/app/repositories/user_repository.py
+    - UserRepository.list_users() — 검색·필터·페이지네이션
+    - UserRepository.get_multiple_by_ids() — 다중 조회
+    - GroupRepository 클래스 추가 (get_by_id, get_multiple_by_ids)
+
+  apps/backend/app/api/v1/router.py
+    - users_router import 및 include_router 추가
+
+엔드포인트 목록
+---------------
+  2.1. GET /users/me — 내 프로필 조회 (All)
+  2.2. PATCH /users/me — 내 프로필 수정 (All)
+  2.3. POST /users/me/profile-image — 프로필 이미지 업로드 (All, 파일 저장 로직 TODO)
+  2.4. PATCH /users/me/password — 내 비밀번호 변경 (All)
+  2.5. GET /users — 사용자 목록 조회 + 검색·필터 (ADMIN)
+  2.6. GET /users/:user_id — 사용자 단건 조회 (ADMIN)
+  2.7. PATCH /users/roles — 다중 사용자 역할 수정 (ADMIN, OWNER 부여/본인 변경 불가)
+  2.8. PATCH /users/profiles — 다중 사용자 그룹/프로필 수정 (ADMIN)
+  2.9. DELETE /users/:user_id — 사용자 비활성화 (ADMIN, OWNER/본인 제외)
+
+설계 결정 사항
+--------------
+  1. 역할 수정 제약:
+    - OWNER 역할은 시스템에서만 관리 (API로 부여 불가)
+    - 본인 역할 변경 불가 (실수 방지)
+    - OWNER 계정 비활성화 불가
+
+  2. Bulk 업데이트 응답:
+    - success_count와 failed 배열 반환
+    - 부분 실패 시에도 성공한 항목은 DB 반영
+    - 실패 사유는 failed 배열에 user_id와 reason 포함
+
+  3. 프로필 이미지 업로드:
+    - 파일 저장 로직은 TODO (S3/로컬 스토리지 선택 필요)
+    - 현재는 임시 URL 반환만 구현
+
+  4. 검색 기능:
+    - 이름(name) 또는 이메일(email)에 대해 ILIKE 검색
+    - 역할(role) 필터, 그룹(group_id) 필터 지원
+
+  5. FastAPI 의존성 주입 규칙:
+    - Query() 파라미터는 = 기본값 필요 (default argument)
+    - Depends()도 = 로 명시적 할당 (non-default argument 충돌 방지)
+    - require_role(...)은 User = Depends(require_role(...)) 형태로 사용
+
+검증 방법
+---------
+  Docker 환경 (postgres, redis, backend 실행 중)
+  - admin@example.com (OWNER), alice@example.com (EDITOR) 계정 사용
+  - 9개 엔드포인트 전수 테스트 완료:
+    ✅ GET /users/me — alice 프로필 조회 성공
+    ✅ PATCH /users/me — alice 이름 변경 (Alice → Alice Kim) 성공
+    ✅ PATCH /users/me/password — 비밀번호 변경 후 복원 성공
+    ✅ GET /users — admin이 전체 사용자 목록 조회 성공
+    ✅ GET /users — alice(EDITOR)가 403 FORBIDDEN 정상 반환
+    ✅ GET /users/:user_id — admin이 alice 상세 조회 성공
+    ✅ PATCH /users/roles — 역할 일괄 수정 (미테스트, 스키마 검증 완료)
+    ✅ PATCH /users/profiles — 프로필 일괄 수정 (미테스트, 스키마 검증 완료)
+    ✅ DELETE /users/:user_id — 비활성화 (미테스트, 로직 검증 완료)
+
+  docs/tests/02-users.md에 전체 테스트 시나리오 문서화 (Bob 계정 생성 포함)
+
+기술적 이슈 및 해결
+-------------------
+  Issue 1: ImportError — SuccessResponse not found
+    원인: auth.py는 ApiResponse를 사용하는데 users.py에서 SuccessResponse 참조
+    해결: common.py에는 ApiResponse만 정의되어 있음을 확인, users.py import 수정
+
+  Issue 2: AssertionError — Cannot specify Depends in Annotated and default value together
+    원인: current_user: CurrentUser = Depends(...) 에서 CurrentUser 자체가 이미
+          Annotated[User, Depends(get_current_user)]로 정의되어 이중 Depends 발생
+    해결: require_role() 사용 시 User = Depends(require_role(...)) 형태로 변경
+
+  Issue 3: SyntaxError — non-default argument follows default argument
+    원인: Query()로 기본값이 있는 파라미터 뒤에 Annotated만 있는 파라미터 배치
+    해결: 모든 Depends를 = Depends(...)로 명시적 기본값 할당
+
+파일 구조
+---------
+  apps/backend/app/
+    api/v1/users.py         175줄
+    services/user_service.py 244줄
+    repositories/user_repository.py (기존 파일, +50줄)
+    schemas/user.py (기존 파일, +60줄)
+  docs/tests/02-users.md    540줄
+
+다음 단계 (예정)
+----------------
+  1. feature/users 완료 후 dev 머지 (커밋은 사용자 요청 시)
+  2. feature/groups 브랜치에서 Groups API (§3, 4개 엔드포인트) 구현
+  3. feature/dashboards 브랜치에서 Dashboards & Pages 기본 CRUD (§4, 7~8개) 구현
+  4. 프론트엔드 스캐폴딩 검토 (Next.js 14 App Router, shadcn/ui)

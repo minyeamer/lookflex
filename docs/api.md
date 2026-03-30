@@ -1,4 +1,4 @@
-# LookFlex API 문서
+# Flooks API 문서
 
 > **Base URL** `http://localhost:8000/api/v1`
 > **인증 방식** JWT Bearer Token (`Authorization: Bearer <access_token>`)
@@ -2545,7 +2545,7 @@ GET /admin/smtp
     "port": 587,
     "username": "noreply@example.com",
     "use_tls": true,
-    "from_name": "LookFlex",
+    "from_name": "Flooks",
     "from_email": "noreply@example.com",
     "is_configured": true
   }
@@ -2571,7 +2571,7 @@ PUT /admin/smtp
   "username": "noreply@example.com",
   "password": "app-password",
   "use_tls": true,
-  "from_name": "LookFlex",
+  "from_name": "Flooks",
   "from_email": "noreply@example.com"
 }
 ```

@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     # Database
-    DATABASE_URL: str = "postgresql+asyncpg://lookflex_user:password@localhost:5432/lookflex"
+    DATABASE_URL: str = "postgresql+asyncpg://flooks_user:password@localhost:5432/flooks"
 
     # Redis — Docker는 REDIS_URL을 직접 주입, 로컬은 컴포넌트에서 조합
     REDIS_URL: str = ""
@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     SMTP_PORT: int = 587
     SMTP_USER: str = ""
     SMTP_PASSWORD: str = ""
-    SMTP_FROM_NAME: str = "LookFlex"
+    SMTP_FROM_NAME: str = "Flooks"
     SMTP_FROM_EMAIL: str = ""
 
     # CORS

@@ -1,4 +1,4 @@
-# LookFlex 아키텍처 & 프로젝트 구조
+# Flooks 아키텍처 & 프로젝트 구조
 
 ---
 
@@ -64,7 +64,7 @@ Docker Compose 기반으로 잘 작성된 `docker-compose.yml`은 K8s 마이그�
 ## 3. 전체 폴더 구조
 
 ```
-lookflex/
+flooks/
 │
 ├── apps/
 │   ├── backend/                        # FastAPI 백엔드
@@ -308,7 +308,7 @@ services:
   # ── 데이터베이스 ──────────────────────────────────────
   postgres:
     image: postgres:16-alpine
-    container_name: lookflex-postgres
+    container_name: flooks-postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -330,7 +330,7 @@ services:
   # ── 캐시 ────────────────────────────────────────────
   redis:
     image: redis:7-alpine
-    container_name: lookflex-redis
+    container_name: flooks-redis
     command: redis-server /usr/local/etc/redis/redis.conf
     volumes:
       - redis_data:/data
@@ -346,7 +346,7 @@ services:
 
   # ── 백엔드 ────────────────────────────────────────────
   backend:
-    container_name: lookflex-backend
+    container_name: flooks-backend
     build:
       context: ./apps/backend
       dockerfile: Dockerfile
@@ -369,7 +369,7 @@ services:
 
   # ── 프론트엔드 ───────────────────────────────────────
   frontend:
-    container_name: lookflex-frontend
+    container_name: flooks-frontend
     build:
       context: ./apps/frontend
       dockerfile: Dockerfile
@@ -383,7 +383,7 @@ services:
 
   # ── 리버스 프록시 ─────────────────────────────────────
   nginx:
-    container_name: lookflex-nginx
+    container_name: flooks-nginx
     build:
       context: ./infra/nginx
     ports:
@@ -580,7 +580,7 @@ Redis는 **임시 데이터를 빠르게 읽고 쓰는 인메모리 저장소**�
 재시작 시 데이터 유실을 허용하는 임시 데이터에만 사용하고,
 중요한 영구 데이터는 모두 PostgreSQL에 저장합니다.
 
-### LookFlex에서 Redis를 사용하는 곳
+### Flooks에서 Redis를 사용하는 곳
 
 | 용도 | 키 패턴 예시 | TTL | 설명 |
 |---|---|---|---|
@@ -668,8 +668,8 @@ redis_data       → /data                     (선택: RDB 스냅샷 저장 시
 
 ```bash
 # 백업 예시 (crontab에 등록)
-docker exec lookflex-postgres pg_dump -U $POSTGRES_USER $POSTGRES_DB \
-  | gzip > /backup/lookflex_$(date +%Y%m%d).sql.gz
+docker exec flooks-postgres pg_dump -U $POSTGRES_USER $POSTGRES_DB \
+  | gzip > /backup/flooks_$(date +%Y%m%d).sql.gz
 ```
 
 ---
@@ -683,8 +683,8 @@ docker exec lookflex-postgres pg_dump -U $POSTGRES_USER $POSTGRES_DB \
 # .env.example  (이 파일은 Git에 포함, 실제 값 없이 키만 나열)
 
 # PostgreSQL
-POSTGRES_DB=lookflex
-POSTGRES_USER=lookflex_user
+POSTGRES_DB=flooks
+POSTGRES_USER=flooks_user
 POSTGRES_PASSWORD=
 
 # Redis
@@ -700,7 +700,7 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=
 SMTP_PASSWORD=
-SMTP_FROM_NAME=LookFlex
+SMTP_FROM_NAME=Flooks
 SMTP_FROM_EMAIL=
 
 # BigQuery (서비스 계정 JSON 키 파일 경로)

@@ -41,7 +41,7 @@ def _send_sync(to: str, subject: str, body_html: str) -> None:
 # ── 템플릿 ────────────────────────────────────────────────────────────────────
 
 async def send_otp_email(to: str, code: str, name: str = "사용자") -> None:
-    subject = "[LookFlex] 이메일 인증 코드"
+    subject = "[Flooks] 이메일 인증 코드"
     body = f"""
     <p>안녕하세요, {name}님.</p>
     <p>아래 인증 코드를 입력해주세요.</p>
@@ -52,7 +52,7 @@ async def send_otp_email(to: str, code: str, name: str = "사용자") -> None:
 
 
 async def send_password_reset_email(to: str, name: str, reset_url: str) -> None:
-    subject = "[LookFlex] 비밀번호 재설정"
+    subject = "[Flooks] 비밀번호 재설정"
     body = f"""
     <p>안녕하세요, {name}님.</p>
     <p>아래 링크를 클릭하여 비밀번호를 재설정하세요.</p>
@@ -64,10 +64,10 @@ async def send_password_reset_email(to: str, name: str, reset_url: str) -> None:
 
 async def send_approval_result_email(to: str, name: str, approved: bool, reason: str = "") -> None:
     if approved:
-        subject = "[LookFlex] 가입 승인 완료"
+        subject = "[Flooks] 가입 승인 완료"
         body = f"<p>{name}님의 가입 요청이 승인되었습니다. 로그인하여 서비스를 이용하세요.</p>"
     else:
-        subject = "[LookFlex] 가입 요청 거절"
+        subject = "[Flooks] 가입 요청 거절"
         body = f"<p>{name}님의 가입 요청이 거절되었습니다.</p>"
         if reason:
             body += f"<p>사유: {reason}</p>"

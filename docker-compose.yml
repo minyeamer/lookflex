@@ -2,7 +2,7 @@ services:
   # ── 데이터베이스 ──────────────────────────────────────
   postgres:
     image: postgres:16-alpine
-    container_name: lookflex-postgres
+    container_name: flooks-postgres
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -22,7 +22,7 @@ services:
   # ── 캐시 ────────────────────────────────────────────
   redis:
     image: redis:7-alpine
-    container_name: lookflex-redis
+    container_name: flooks-redis
     command: redis-server /usr/local/etc/redis/redis.conf
     volumes:
       - redis_data:/data
@@ -38,7 +38,7 @@ services:
 
   # ── 백엔드 ────────────────────────────────────────────
   backend:
-    container_name: lookflex-backend
+    container_name: flooks-backend
     build:
       context: ./apps/backend
       dockerfile: Dockerfile
@@ -68,7 +68,7 @@ services:
 
   # ── 프론트엔드 ───────────────────────────────────────
   frontend:
-    container_name: lookflex-frontend
+    container_name: flooks-frontend
     build:
       context: ./apps/frontend
       dockerfile: Dockerfile
@@ -82,7 +82,7 @@ services:
 
   # ── 리버스 프록시 ─────────────────────────────────────
   nginx:
-    container_name: lookflex-nginx
+    container_name: flooks-nginx
     build:
       context: ./infra/nginx
     ports:

@@ -1,4 +1,4 @@
-# LookFlex 테스트 가이드
+# Flooks 테스트 가이드
 
 로컬 개발 환경에서 백엔드 API를 검증하는 절차를 기록합니다.
 현재 구현된 Auth API(10개 엔드포인트)를 전수 테스트합니다.
@@ -21,7 +21,7 @@
 ### 컨테이너 시작 (postgres + redis + backend)
 
 ```bash
-cd /Users/cuz/Documents/Github/lookflex
+cd /Users/cuz/Documents/Github/flooks
 
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres redis backend
 ```
@@ -39,9 +39,9 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml ps
 
 ```
 NAME                STATUS
-lookflex-postgres   Up X seconds (healthy)
-lookflex-redis      Up X seconds (healthy)
-lookflex-backend    Up X seconds
+flooks-postgres   Up X seconds (healthy)
+flooks-redis      Up X seconds (healthy)
+flooks-backend    Up X seconds
 ```
 
 backend가 `Restarting` 상태라면 로그를 확인합니다:
@@ -129,7 +129,7 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml logs backend \
 출력 예시:
 
 ```
-lookflex-backend | [EMAIL - SMTP 미설정] to=alice@example.com | subject=[LookFlex] 이메일 인증 코드 | body=
+flooks-backend | [EMAIL - SMTP 미설정] to=alice@example.com | subject=[Flooks] 이메일 인증 코드 | body=
     ...
     <h2 style="letter-spacing:6px">483921</h2>
     ...
@@ -141,7 +141,7 @@ HTML body 안에 6자리 숫자가 코드입니다.
 
 ```bash
 # redis-cli를 컨테이너 안에서 실행
-docker exec -it lookflex-redis redis-cli -a devredis123
+docker exec -it flooks-redis redis-cli -a devredis123
 
 # 또는 로컬 redis-cli 사용
 redis-cli -p 6379 -a devredis123
@@ -254,7 +254,7 @@ curl -s -X POST http://localhost:8000/api/v1/auth/register \
 
 ```bash
 # postgres 컨테이너에 접속
-docker exec -it lookflex-postgres psql -U lookflex_user -d lookflex
+docker exec -it flooks-postgres psql -U flooks_user -d flooks
 ```
 
 ```sql
@@ -292,7 +292,7 @@ SELECT id, email, role, is_active FROM users;
 # OWNER 계정으로 로그인 (쿠키를 파일에 저장)
 curl -s -X POST http://localhost:8000/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -c /tmp/lookflex_cookies.txt \
+  -c /tmp/flooks_cookies.txt \
   -d '{
     "email": "admin@example.com",
     "password": "AdminPass1!"
@@ -318,7 +318,7 @@ Access Token을 변수로 저장:
 ```bash
 ACCESS_TOKEN=$(curl -s -X POST http://localhost:8000/api/v1/auth/login \
   -H "Content-Type: application/json" \
-  -c /tmp/lookflex_cookies.txt \
+  -c /tmp/flooks_cookies.txt \
   -d '{"email":"admin@example.com","password":"AdminPass1!"}' \
   | jq -r '.data.access_token')
 
@@ -391,7 +391,7 @@ curl -s -X PATCH http://localhost:8000/api/v1/auth/register-requests/$REQUEST_ID
 승인 후 users 테이블에 alice가 생성됐는지 확인:
 
 ```bash
-docker exec -it lookflex-postgres psql -U lookflex_user -d lookflex \
+docker exec -it flooks-postgres psql -U flooks_user -d flooks \
   -c "SELECT id, email, role, is_active FROM users;"
 ```
 
@@ -419,7 +419,7 @@ echo $ALICE_TOKEN
 
 ```bash
 curl -s -X POST http://localhost:8000/api/v1/auth/refresh \
-  -b /tmp/lookflex_cookies.txt | jq
+  -b /tmp/flooks_cookies.txt | jq
 ```
 
 기대 응답 (`200`): 새 `access_token` 반환.
@@ -442,7 +442,7 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml logs backend \
   | grep "비밀번호 재설정"
 
 # Redis에서 토큰 목록 확인 (키 패턴 검색)
-docker exec -it lookflex-redis redis-cli -a devredis123 KEYS "pw_reset:*"
+docker exec -it flooks-redis redis-cli -a devredis123 KEYS "pw_reset:*"
 ```
 
 ---
@@ -470,7 +470,7 @@ curl -s -X POST http://localhost:8000/api/v1/auth/password-reset \
 
 ```bash
 curl -s -X POST http://localhost:8000/api/v1/auth/logout \
-  -b /tmp/lookflex_cookies.txt
+  -b /tmp/flooks_cookies.txt
 # → HTTP 204, 빈 응답
 ```
 
@@ -478,7 +478,7 @@ curl -s -X POST http://localhost:8000/api/v1/auth/logout \
 
 ```bash
 curl -s -X POST http://localhost:8000/api/v1/auth/refresh \
-  -b /tmp/lookflex_cookies.txt | jq
+  -b /tmp/flooks_cookies.txt | jq
 # → 401 UNAUTHORIZED
 ```
 
@@ -509,18 +509,18 @@ curl -s http://localhost:8000/api/v1/auth/register-requests \
 
 ```bash
 # 모든 테이블 목록 확인 (22개)
-docker exec -it lookflex-postgres psql -U lookflex_user -d lookflex -c "\dt"
+docker exec -it flooks-postgres psql -U flooks_user -d flooks -c "\dt"
 
 # users 목록
-docker exec -it lookflex-postgres psql -U lookflex_user -d lookflex \
+docker exec -it flooks-postgres psql -U flooks_user -d flooks \
   -c "SELECT id, email, role, is_active FROM users;"
 
 # register_requests 목록
-docker exec -it lookflex-postgres psql -U lookflex_user -d lookflex \
+docker exec -it flooks-postgres psql -U flooks_user -d flooks \
   -c "SELECT id, email, status FROM register_requests;"
 
 # Alembic 마이그레이션 히스토리
-docker exec -it lookflex-postgres psql -U lookflex_user -d lookflex \
+docker exec -it flooks-postgres psql -U flooks_user -d flooks \
   -c "SELECT * FROM alembic_version;"
 ```
 
@@ -529,7 +529,7 @@ docker exec -it lookflex-postgres psql -U lookflex_user -d lookflex \
 ## 6. Redis 상태 확인
 
 ```bash
-docker exec -it lookflex-redis redis-cli -a devredis123
+docker exec -it flooks-redis redis-cli -a devredis123
 
 # 전체 키 목록
 KEYS *

@@ -1,4 +1,4 @@
-# LookFlex — 커스텀 비즈니스 대시보드 플랫폼
+# Flooks — 커스텀 비즈니스 대시보드 플랫폼
 
 > Google Looker Studio의 한계를 극복하고, 커머스 도메인에 최적화된 사내 전용 데이터 시각화 플랫폼
 
@@ -21,7 +21,7 @@
 
 ## 1. 프로젝트 배경 및 목표
 
-LookFlex는 Google Looker Studio를 대체하기 위해 시작된 사내 전용 대시보드 플랫폼입니다.
+Flooks는 Google Looker Studio를 대체하기 위해 시작된 사내 전용 대시보드 플랫폼입니다.
 BigQuery에 적재된 매출 및 광고 데이터를 기반으로, 구성원 각자가 원하는 방식으로 데이터를 조회하고 시각화할 수 있는 환경을 제공합니다.
 
 **핵심 목표**
@@ -36,7 +36,7 @@ BigQuery에 적재된 매출 및 광고 데이터를 기반으로, 구성원 각
 
 ## 2. 해결하려는 문제
 
-| 문제 | Looker Studio 현황 | LookFlex 목표 |
+| 문제 | Looker Studio 현황 | Flooks 목표 |
 |---|---|---|
 | 레이아웃 자유도 부족 | 그리드 간격이 넓어 표 배치가 부자연스러움 | px 단위 자유 배치 + 그리드 설정 옵션 제공 |
 | 메트릭 변경 UX 불편 | 조회 권한 사용자가 헤더 아이콘을 찾아 클릭해야 함 | 사이드바 또는 상단 컨트롤 패널로 직관적 전환 |
@@ -205,7 +205,7 @@ CREATE TABLE user_view_configs (
 ## 6. 디렉터리 구조
 
 ```
-lookflex/
+flooks/
 ├── apps/
 │   ├── frontend/                  # Next.js 앱
 │   │   ├── app/                   # App Router
@@ -376,8 +376,8 @@ Docker Compose 기반으로 개발하면 로컬 → 클라우드 마이그레이
 
 ```bash
 # 저장소 클론
-git clone https://github.com/cuz/lookflex.git
-cd lookflex
+git clone https://github.com/cuz/flooks.git
+cd flooks
 
 # 환경 변수 복사
 cp .env.example .env
@@ -389,4 +389,4 @@ docker compose up -d
 
 ---
 
-*LookFlex — Built to replace Looker Studio, one table at a time.*
+*Flooks — Built to replace Looker Studio, one table at a time.*
